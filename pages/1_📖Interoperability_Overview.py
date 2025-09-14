@@ -394,55 +394,102 @@ with col2:
                               title="Number of Users by Service Over Time", color_discrete_map=color_map)
     fig_grouped_user.update_layout(yaxis_title="Wallet count", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
     st.plotly_chart(fig_grouped_user, use_container_width=True)
-# --- Row 4: Donut Charts -------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+# --- Row 5: Donut Charts -------------------------------------------------------------------------------------------------------------------------------------------------------
 total_gmp_tx = grouped['gmp_num_txs'].sum()
 total_transfers_tx = grouped['transfers_num_txs'].sum()
 
 total_gmp_vol = grouped['gmp_volume'].sum()
 total_transfers_vol = grouped['transfers_volume'].sum()
 
-tx_df = pd.DataFrame({
-    "Service": ["GMP", "Token Transfers"],
-    "Count": [total_gmp_tx, total_transfers_tx]
-})
-
-donut_tx = px.pie(
-    tx_df,
-    names="Service",
-    values="Count",
-    color="Service",  
-    hole=0.5,
-    title="Share of Total Transactions By Service",
-    color_discrete_map={
+tx_df = pd.DataFrame({"Service": ["GMP", "Token Transfers"], "Count": [total_gmp_tx, total_transfers_tx]})
+donut_tx = px.pie(tx_df, names="Service", values="Count", color="Service", hole=0.5, title="Share of Total Transactions By Service", color_discrete_map={
         "GMP": "#ff7400",
         "Token Transfers": "#00a1f7"
     }
 )
 
-vol_df = pd.DataFrame({
-    "Service": ["GMP", "Token Transfers"],
-    "Volume": [total_gmp_vol, total_transfers_vol]
-})
+vol_df = pd.DataFrame({"Service": ["GMP", "Token Transfers"], "Volume": [total_gmp_vol, total_transfers_vol]})
 
-donut_vol = px.pie(
-    vol_df,
-    names="Service",
-    values="Volume",
-    color="Service",  
-    hole=0.5,
-    title="Share of Total Volume By Service",
-    color_discrete_map={
+donut_vol = px.pie(vol_df, names="Service", values="Volume", color="Service", hole=0.5, title="Share of Total Volume By Service", color_discrete_map={
         "GMP": "#ff7400",
         "Token Transfers": "#00a1f7"
     }
 )
-
 col5, col6 = st.columns(2)
 col5.plotly_chart(donut_tx, use_container_width=True)
 col6.plotly_chart(donut_vol, use_container_width=True)
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_stats_chain_fee_user_path(start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
 
+    query = f"""
+    WITH axelar_service AS (
+  SELECT 
+    created_at, 
+    LOWER(data:send:original_source_chain) AS source_chain, 
+    LOWER(data:send:original_destination_chain) AS destination_chain,
+    sender_address AS user, case 
+      WHEN IS_ARRAY(data:send:fee_value) THEN NULL
+      WHEN IS_OBJECT(data:send:fee_value) THEN NULL
+      WHEN TRY_TO_DOUBLE(data:send:fee_value::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:send:fee_value::STRING)
+      ELSE NULL END AS fee, 'Token Transfers' as "Service"
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+  UNION ALL
+  SELECT  
+    created_at,
+    LOWER(data:call.chain::STRING) AS source_chain,
+    LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain,
+    data:call.transaction.from::STRING AS user, COALESCE( CASE 
+        WHEN IS_ARRAY(data:gas:gas_used_amount) OR IS_OBJECT(data:gas:gas_used_amount) 
+          OR IS_ARRAY(data:gas_price_rate:source_token.token_price.usd) OR    IS_OBJECT(data:gas_price_rate:source_token.token_price.usd) 
+        THEN NULL
+        WHEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) IS NOT NULL 
+          AND TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING) IS NOT NULL 
+        THEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) * TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING)
+        ELSE NULL END, CASE 
+        WHEN IS_ARRAY(data:fees:express_fee_usd) OR IS_OBJECT(data:fees:express_fee_usd) THEN NULL
+        WHEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING)
+        ELSE NULL END) AS fee, 'GMP' as "Service"
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received')
 
-# -----------------------------------------------------------------------------------------------------------------------
+SELECT "Service", count(distinct user) as "Number of Users", 
+round(sum(fee)) as "Total Gas Fees", count(distinct (source_chain || '➡' || destination_chain)) as "Unique Paths"
+FROM axelar_service
+where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+group by 1
+    """
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Load Data ===================================================================
+df_stats_chain_fee_user_path = load_stats_chain_fee_user_path(start_date, end_date)
+
+# === Charts: User, Fee, Path =====================================================
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    fig_stacked_fee = px.bar(df_stats_chain_fee_user_path, x="Service", y="Total Gas Fees", color="Service", title="Total Gas Fees by Service", color_discrete_map=color_map)
+    fig_stacked_fee.update_layout(barmode="stack", yaxis_title="$USD", xaxis_title="")
+    st.plotly_chart(fig_stacked_fee, use_container_width=True)
+
+with col2:
+    fig_grouped_user = px.bar(df_stats_chain_fee_user_path, x="Service", y="Number of Users", color="Service", barmode="group", 
+                              title="Total Number of Users by Service", color_discrete_map=color_map)
+    fig_grouped_user.update_layout(yaxis_title="Wallet count", xaxis_title="")
+    st.plotly_chart(fig_grouped_user, use_container_width=True)
+
+with col3:
+    fig_grouped_path = px.bar(df_stats_chain_fee_user_path, x="Service", y="Unique Paths", color="Service", barmode="group", 
+                              title="Number of Unique Paths by Service", color_discrete_map=color_map)
+    fig_grouped_path.update_layout(yaxis_title="Wallet count", xaxis_title="")
+    st.plotly_chart(fig_grouped_path, use_container_width=True)
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --- Row: Transfers by Source Chain over Time ---
 st.subheader("🔄 Transfers Count by Source Chain Over Time")
 
