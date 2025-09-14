@@ -285,16 +285,12 @@ fig1.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_txs'], name='Tot
 fig1.update_layout(barmode='stack', title="Transactions By Service Over Time", yaxis=dict(title="Txns count"), 
                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
-# -- Normalized stacked bar
-df_norm_tx = grouped.copy()
-df_norm_tx['gmp_norm'] = df_norm_tx['gmp_num_txs'] / df_norm_tx['total_txs']
-df_norm_tx['transfers_norm'] = df_norm_tx['transfers_num_txs'] / df_norm_tx['total_txs']
-
+# -- Stacked bar + line
 fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=df_norm_tx['period'], y=df_norm_tx['gmp_norm'], name='GMP', marker_color='#ff7400'))
-fig2.add_trace(go.Bar(x=df_norm_tx['period'], y=df_norm_tx['transfers_norm'], name='Token Transfers', marker_color='#00a1f7'))
-fig2.update_layout(barmode='stack', title="Normalized Transactions By Service Over Time", yaxis_tickformat='%', 
-                   legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+fig2.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_volume'], name='GMP', marker_color='#ff7400'))
+fig2.add_trace(go.Bar(x=grouped['period'], y=grouped['transfers_volume'], name='Token Transfers', marker_color='#00a1f7'))
+fig2.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_volume'], name='Total', mode='lines+markers', marker_color='black'))
+fig2.update_layout(barmode='stack', title="Volume By Service Over Time", yaxis=dict(title="$USD"), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 col1, col2 = st.columns(2)
 
@@ -308,12 +304,16 @@ with col2:
 # --- Row 3: Volume Over Time ----------------------------------------------------------------------------------------
 st.markdown("## 💵 Volume Over Time by Service")
 
-# -- Stacked bar + line
+# -- Normalized stacked bar
+df_norm_tx = grouped.copy()
+df_norm_tx['gmp_norm'] = df_norm_tx['gmp_num_txs'] / df_norm_tx['total_txs']
+df_norm_tx['transfers_norm'] = df_norm_tx['transfers_num_txs'] / df_norm_tx['total_txs']
+
 fig3 = go.Figure()
-fig3.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_volume'], name='GMP', marker_color='#ff7400'))
-fig3.add_trace(go.Bar(x=grouped['period'], y=grouped['transfers_volume'], name='Token Transfers', marker_color='#00a1f7'))
-fig3.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_volume'], name='Total', mode='lines+markers', marker_color='black'))
-fig3.update_layout(barmode='stack', title="Volume By Service Over Time", yaxis=dict(title="$USD"), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+fig3.add_trace(go.Bar(x=df_norm_tx['period'], y=df_norm_tx['gmp_norm'], name='GMP', marker_color='#ff7400'))
+fig3.add_trace(go.Bar(x=df_norm_tx['period'], y=df_norm_tx['transfers_norm'], name='Token Transfers', marker_color='#00a1f7'))
+fig3.update_layout(barmode='stack', title="Normalized Transactions By Service Over Time", yaxis_tickformat='%', 
+                   legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 # -- Normalized Charts
 df_norm_vol = grouped.copy()
@@ -327,10 +327,10 @@ fig4.update_layout(barmode='stack', title="Normalized Volume By Service Over Tim
 
 col1, col2 = st.columns(2)
 
-with col1:
+with col3:
     st.plotly_chart(fig3, use_container_width=True)
 
-with col2:
+with col4:
     st.plotly_chart(fig4, use_container_width=True)
 
 # --- Row 4: Donut Charts ---------------------------------------------------------------------------------------------
