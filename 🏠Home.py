@@ -35,7 +35,7 @@ st.markdown(
 # --- Info Box ---
 st.markdown(
     """
-    <div style="background-color: #fec7a2; padding: 15px; border-radius: 10px; border: 1px solid #fec7a2;">
+    <div style="background-color: #a3fcbc; padding: 15px; border-radius: 10px; border: 1px solid #a3fcbc;">
         <b>Axelar</b> is a <b>decentralized, permissionless blockchain protocol</b> that facilitates 
         <b>cross-chain interoperability</b>, enabling seamless communication and <b>asset transfers</b> 
         between different blockchains. 
