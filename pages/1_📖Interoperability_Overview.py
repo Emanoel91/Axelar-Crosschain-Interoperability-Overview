@@ -393,7 +393,8 @@ with col2:
     fig_bubble_path = px.scatter(df_stats_overtime, x="Date", y="Unique Paths", size="Unique Paths", color="Service", text="Unique Paths", 
                             title="Number of Unique Paths by Service Over Time", size_max=60)
     fig_bubble_path.update_traces(textposition='middle center')
-    fig_bubble_path.update_layout(yaxis=dict(categoryorder="array", categoryarray=["GMP", "Token Transfers"]))
+    fig_bubble_path.update_layout(yaxis=dict(categoryorder="array", categoryarray=["GMP", "Token Transfers"]), 
+                                  legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
     st.plotly_chart(fig_bubble_path, use_container_width=True)
 
 with col3:
