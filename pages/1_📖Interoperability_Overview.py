@@ -327,10 +327,10 @@ fig4.update_layout(barmode='stack', title="Normalized Volume By Service Over Tim
 
 col1, col2 = st.columns(2)
 
-with col3:
+with col1:
     st.plotly_chart(fig3, use_container_width=True)
 
-with col4:
+with col2:
     st.plotly_chart(fig4, use_container_width=True)
 
 # --- Row 4: Donut Charts ---------------------------------------------------------------------------------------------
