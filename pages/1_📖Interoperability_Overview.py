@@ -469,7 +469,6 @@ group by 1
 
 # === Load Data ===================================================================
 df_stats_chain_fee_user_path = load_stats_chain_fee_user_path(start_date, end_date)
-
 # === Charts: User, Fee, Path =====================================================
 col1, col2, col3 = st.columns(3)
 
@@ -479,16 +478,14 @@ with col1:
     st.plotly_chart(fig_stacked_fee, use_container_width=True)
 
 with col2:
-    fig_grouped_user = px.bar(df_stats_chain_fee_user_path, x="Service", y="Number of Users", color="Service", barmode="group", 
-                              title="Total Number of Users by Service", color_discrete_map=color_map)
-    fig_grouped_user.update_layout(yaxis_title="Wallet count", xaxis_title="")
-    st.plotly_chart(fig_grouped_user, use_container_width=True)
+    fig_stacked_user = px.bar(df_stats_chain_fee_user_path, x="Service", y="Number of Users", color="Service", title="Total Number of Users by Service", color_discrete_map=color_map)
+    fig_stacked_user.update_layout(barmode="stack", yaxis_title="wallet count", xaxis_title="")
+    st.plotly_chart(fig_stacked_user, use_container_width=True)
 
 with col3:
-    fig_grouped_path = px.bar(df_stats_chain_fee_user_path, x="Service", y="Unique Paths", color="Service", barmode="group", 
-                              title="Number of Unique Paths by Service", color_discrete_map=color_map)
-    fig_grouped_path.update_layout(yaxis_title="Wallet count", xaxis_title="")
-    st.plotly_chart(fig_grouped_path, use_container_width=True)
+    fig_stacked_path = px.bar(df_stats_chain_fee_user_path, x="Service", y="Unique Paths", color="Service", title="Number of Unique Paths by Service", color_discrete_map=color_map)
+    fig_stacked_path.update_layout(barmode="stack", yaxis_title="Path count", xaxis_title="")
+    st.plotly_chart(fig_stacked_path, use_container_width=True)
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --- Row: Transfers by Source Chain over Time ---
 st.subheader("🔄 Transfers Count by Source Chain Over Time")
