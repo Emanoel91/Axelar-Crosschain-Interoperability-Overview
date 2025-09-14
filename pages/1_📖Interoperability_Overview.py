@@ -104,7 +104,7 @@ with col3:
     end_date = st.date_input("End Date", value=pd.to_datetime("2025-09-30"))
 
 # --- Fetch Data from API --------------------------------------------------------------------------------------------
-@st.cache_data(ttl=3600)
+@st.cache_data
 def load_data():
     url = "https://api.axelarscan.io/api/interchainChart"
     response = requests.get(url)
@@ -161,7 +161,8 @@ with col1:
     st.markdown(card_style.format(label="Total Number of Transfers", value=f"{total_num_txs:,} Txns"), unsafe_allow_html=True)
 with col2:
     st.markdown(card_style.format(label="Total Volume of Transfers", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
     
 # --- Row 2: Transactions Over Time ----------------------------------------------------------------------------------
 import streamlit as st
