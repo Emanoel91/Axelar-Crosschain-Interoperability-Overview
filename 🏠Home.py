@@ -39,10 +39,8 @@ st.markdown(
         <b>Axelar</b> is a <b>decentralized, permissionless blockchain protocol</b> that facilitates 
         <b>cross-chain interoperability</b>, enabling seamless communication and <b>asset transfers</b> 
         between different blockchains. 
-        
         This <b>dashboard</b> provides an evaluation of <b>Axelar’s cross-chain services</b>, 
         including <b>General Message Passing (GMP)</b> and <b>Token Transfers</b>. 
-        
         It examines the underlying <b>GMP smart contracts</b>, analyzes the growing adoption of 
         <b>Axelar’s Interchain Token Service (ITS)</b>, and reviews <b>on-chain data</b> from established 
         platforms built on Axelar, such as <b>Squid</b> and <b>Satellite</b>.
