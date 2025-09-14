@@ -137,13 +137,33 @@ grouped['total_txs'] = grouped['gmp_num_txs'] + grouped['transfers_num_txs']
 grouped['total_volume'] = grouped['gmp_volume'] + grouped['transfers_volume']
 
 # --- KPI Section ---------------------------------------------------------------------------------------------------
-st.markdown("## 📦 Total Transfer Stats by Service")
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("🔁 Total GMP Transactions", f"{grouped['gmp_num_txs'].sum():,}")
-col2.metric("🔄 Total Token Transfers Transactions", f"{grouped['transfers_num_txs'].sum():,}")
-col3.metric("💰 Total GMP Volume ($)", f"${grouped['gmp_volume'].sum():,.0f}")
-col4.metric("💸 Total Token Transfers Volume ($)", f"${grouped['transfers_volume'].sum():,.0f}")
+st.markdown("## 📦 Total Transfer Stats")
 
+card_style = """
+    <div style="
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        ">
+        <h4 style="margin: 0; font-size: 20px; color: #555;">{label}</h4>
+        <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #000;">{value}</p>
+    </div>
+"""
+
+# محاسبه مجموع‌ها
+# -- total_num_txs = grouped['gmp_num_txs'].sum() + grouped['transfers_num_txs'].sum()
+# -- total_volume = grouped['gmp_volume'].sum() + grouped['transfers_volume'].sum()
+
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown(card_style.format(label="Total Number of Transfers", value=f"{total_txs:,} Txns"), unsafe_allow_html=True)
+with col2:
+    st.markdown(card_style.format(label="Total Volume of Transfers", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
 # --- Row 2: Transactions Over Time ----------------------------------------------------------------------------------
 import streamlit as st
 import plotly.graph_objects as go
