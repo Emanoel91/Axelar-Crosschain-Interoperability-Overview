@@ -249,9 +249,9 @@ total_volume = grouped['gmp_volume'].sum() + grouped['transfers_volume'].sum()
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown(card_style.format(label="Number of Transfers", value=f"{total_num_txs:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Transfers Count", value=f"{total_num_txs:,} Txns"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="Volume of Transfers", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Transfers Volume", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
 with col3:
     st.markdown(card_style.format(label="Unique Users", value=f"{df_crosschain_stats['Number of Users'][0]:,} Wallets"), unsafe_allow_html=True)
 with col4:
@@ -270,20 +270,19 @@ with col8:
     st.markdown(card_style.format(label="Median Gas Fee", value=f"${df_crosschain_stats['Median Gas Fee'][0]:,}"), unsafe_allow_html=True)
     
 # --- Row 2: Transactions Over Time -------------------------------------------------------------------------------------------------------------------------------------------
-# -- Stacked bar + line
 fig1 = go.Figure()
 fig1.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_num_txs'], name='GMP', marker_color='#ff7400'))
 fig1.add_trace(go.Bar(x=grouped['period'], y=grouped['transfers_num_txs'], name='Token Transfers', marker_color='#00a1f7'))
 fig1.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_txs'], name='Total', mode='lines+markers', marker_color='black'))
-fig1.update_layout(barmode='stack', title="Transactions By Service Over Time", yaxis=dict(title="Txns count"), 
+fig1.update_layout(barmode='stack', title="Number of Transfers by Service Over Time", yaxis=dict(title="Txns count"), 
                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
-# -- Stacked bar + line
 fig2 = go.Figure()
 fig2.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_volume'], name='GMP', marker_color='#ff7400'))
 fig2.add_trace(go.Bar(x=grouped['period'], y=grouped['transfers_volume'], name='Token Transfers', marker_color='#00a1f7'))
 fig2.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_volume'], name='Total', mode='lines+markers', marker_color='black'))
-fig2.update_layout(barmode='stack', title="Volume By Service Over Time", yaxis=dict(title="$USD"), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+fig2.update_layout(barmode='stack', title="Volume of Transfers by Service Over Time", yaxis=dict(title="$USD"), 
+                   legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 col1, col2 = st.columns(2)
 
@@ -293,8 +292,7 @@ with col1:
 with col2:
     st.plotly_chart(fig2, use_container_width=True)
 
-
-# --- Row 3: Volume Over Time ----------------------------------------------------------------------------------------
+# --- Row 3: Normalized chart% ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # -- Normalized stacked bar
 df_norm_tx = grouped.copy()
 df_norm_tx['gmp_norm'] = df_norm_tx['gmp_num_txs'] / df_norm_tx['total_txs']
@@ -303,7 +301,7 @@ df_norm_tx['transfers_norm'] = df_norm_tx['transfers_num_txs'] / df_norm_tx['tot
 fig3 = go.Figure()
 fig3.add_trace(go.Bar(x=df_norm_tx['period'], y=df_norm_tx['gmp_norm'], name='GMP', marker_color='#ff7400'))
 fig3.add_trace(go.Bar(x=df_norm_tx['period'], y=df_norm_tx['transfers_norm'], name='Token Transfers', marker_color='#00a1f7'))
-fig3.update_layout(barmode='stack', title="Normalized Transactions By Service Over Time", yaxis_tickformat='%', 
+fig3.update_layout(barmode='stack', title="Normalized Transactions by Service Over Time", yaxis_tickformat='%', 
                    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 # -- Normalized Charts
@@ -314,7 +312,7 @@ df_norm_vol['transfers_norm'] = df_norm_vol['transfers_volume'] / df_norm_vol['t
 fig4 = go.Figure()
 fig4.add_trace(go.Bar(x=df_norm_vol['period'], y=df_norm_vol['gmp_norm'], name='GMP', marker_color='#ff7400'))
 fig4.add_trace(go.Bar(x=df_norm_vol['period'], y=df_norm_vol['transfers_norm'], name='Token Transfers', marker_color='#00a1f7'))
-fig4.update_layout(barmode='stack', title="Normalized Volume By Service Over Time", yaxis_tickformat='%', legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+fig4.update_layout(barmode='stack', title="Normalized Volume by Service Over Time", yaxis_tickformat='%', legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 col1, col2 = st.columns(2)
 
@@ -324,7 +322,84 @@ with col1:
 with col2:
     st.plotly_chart(fig4, use_container_width=True)
 
-# --- Row 4: Donut Charts ---------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_stats_overtime(timeframe, start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    WITH axelar_service AS (
+  SELECT 
+    created_at, 
+    LOWER(data:send:original_source_chain) AS source_chain, 
+    LOWER(data:send:original_destination_chain) AS destination_chain,
+    sender_address AS user, case 
+      WHEN IS_ARRAY(data:send:fee_value) THEN NULL
+      WHEN IS_OBJECT(data:send:fee_value) THEN NULL
+      WHEN TRY_TO_DOUBLE(data:send:fee_value::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:send:fee_value::STRING)
+      ELSE NULL END AS fee, 'Token Transfers' as "Service"
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+
+  UNION ALL
+
+  SELECT  
+    created_at,
+    LOWER(data:call.chain::STRING) AS source_chain,
+    LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain,
+    data:call.transaction.from::STRING AS user, COALESCE( CASE 
+        WHEN IS_ARRAY(data:gas:gas_used_amount) OR IS_OBJECT(data:gas:gas_used_amount) 
+          OR IS_ARRAY(data:gas_price_rate:source_token.token_price.usd) OR    IS_OBJECT(data:gas_price_rate:source_token.token_price.usd) 
+        THEN NULL
+        WHEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) IS NOT NULL 
+          AND TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING) IS NOT NULL 
+        THEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) * TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING)
+        ELSE NULL END, CASE 
+        WHEN IS_ARRAY(data:fees:express_fee_usd) OR IS_OBJECT(data:fees:express_fee_usd) THEN NULL
+        WHEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING)
+        ELSE NULL END) AS fee, 'GMP' as "Service"
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received')
+
+SELECT date_trunc('{timeframe}',created_at) as "Date", "Service", count(distinct user) as "Number of Users", 
+round(sum(fee)) as "Total Gas Fees", count(distinct (source_chain || '➡' || destination_chain)) as "Unique Paths"
+FROM axelar_service
+where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+group by 1, 2
+order by 1
+
+    """
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Load Data ========================================================
+df_stats_overtime = load_stats_overtime(timeframe, start_date, end_date)
+# === Charts: Row 4 ====================================================
+color_map = {
+    "Token Transfers": "#00a1f7",
+    "GMP": "#ff7400"
+}
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    fig_stacked_fee = px.bar(df_stats_overtime, x="Date", y="Total Gas Fees", color="Service", title="Transfer Gas Fees by Service Over Time", color_discrete_map=color_map)
+    fig_stacked_fee.update_layout(barmode="stack", yaxis_title="$USD", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
+    st.plotly_chart(fig_stacked_fee, use_container_width=True)
+
+with col2:
+    fig_bubble_path = px.scatter(df_stats_overtime, x="Date", y="Unique Paths", size="Unique Paths", color="Service", text="Unique Paths", 
+                            title="Number of Unique Paths by Service Over Time", size_max=60)
+    fig_bubble_path.update_traces(textposition='middle center')
+    fig_bubble_path.update_layout(yaxis=dict(categoryorder="array", categoryarray=["GMP", "Token Transfers"]))
+    st.plotly_chart(fig_bubble_path, use_container_width=True)
+
+with col3:
+    fig_grouped_user = px.bar(df_stats_overtime, x="Date", y="Number of Users", color="Service", barmode="group", title="Number of Users by Service Over Time")
+    st.plotly_chart(fig_grouped_user, use_container_width=True)
+# --- Row 4: Donut Charts -------------------------------------------------------------------------------------------------------------------------------------------------------
 total_gmp_tx = grouped['gmp_num_txs'].sum()
 total_transfers_tx = grouped['transfers_num_txs'].sum()
 
