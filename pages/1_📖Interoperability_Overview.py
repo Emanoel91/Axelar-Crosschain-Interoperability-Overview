@@ -230,8 +230,6 @@ where created_at::date>='{start_str}' and created_at::date<='{end_str}'
 df_unique_chains_stats = load_unique_chains_stats(start_date, end_date)
 df_crosschain_stats = load_crosschain_stats(start_date, end_date)
 # --- KPI Section ---------------------------------------------------------------------------------------------------
-st.markdown("## 📦 Total Transfer Stats")
-
 card_style = """
     <div style="
         background-color: #f9f9f9;
@@ -275,8 +273,6 @@ with col8:
 import streamlit as st
 import plotly.graph_objects as go
 
-st.markdown("## 📈 Transactions Over Time by Service")
-
 # -- Stacked bar + line
 fig1 = go.Figure()
 fig1.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_num_txs'], name='GMP', marker_color='#ff7400'))
@@ -302,8 +298,6 @@ with col2:
 
 
 # --- Row 3: Volume Over Time ----------------------------------------------------------------------------------------
-st.markdown("## 💵 Volume Over Time by Service")
-
 # -- Normalized stacked bar
 df_norm_tx = grouped.copy()
 df_norm_tx['gmp_norm'] = df_norm_tx['gmp_num_txs'] / df_norm_tx['total_txs']
