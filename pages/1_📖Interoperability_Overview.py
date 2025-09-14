@@ -269,10 +269,7 @@ with col7:
 with col8:
     st.markdown(card_style.format(label="Median Gas Fee", value=f"${df_crosschain_stats['Median Gas Fee'][0]:,}"), unsafe_allow_html=True)
     
-# --- Row 2: Transactions Over Time ----------------------------------------------------------------------------------
-import streamlit as st
-import plotly.graph_objects as go
-
+# --- Row 2: Transactions Over Time -------------------------------------------------------------------------------------------------------------------------------------------
 # -- Stacked bar + line
 fig1 = go.Figure()
 fig1.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_num_txs'], name='GMP', marker_color='#ff7400'))
