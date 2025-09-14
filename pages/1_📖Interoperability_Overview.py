@@ -282,7 +282,8 @@ fig1 = go.Figure()
 fig1.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_num_txs'], name='GMP', marker_color='#ff7400'))
 fig1.add_trace(go.Bar(x=grouped['period'], y=grouped['transfers_num_txs'], name='Token Transfers', marker_color='#00a1f7'))
 fig1.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_txs'], name='Total', mode='lines+markers', marker_color='black'))
-fig1.update_layout(barmode='stack', title="Transactions By Service Over Time", yaxis=dict(title="Txns count"), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+fig1.update_layout(barmode='stack', title="Transactions By Service Over Time", yaxis=dict(title="Txns count"), 
+                   legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 # -- Normalized stacked bar
 df_norm_tx = grouped.copy()
@@ -311,7 +312,7 @@ fig3 = go.Figure()
 fig3.add_trace(go.Bar(x=grouped['period'], y=grouped['gmp_volume'], name='GMP', marker_color='#ff7400'))
 fig3.add_trace(go.Bar(x=grouped['period'], y=grouped['transfers_volume'], name='Token Transfers', marker_color='#00a1f7'))
 fig3.add_trace(go.Scatter(x=grouped['period'], y=grouped['total_volume'], name='Total', mode='lines+markers', marker_color='black'))
-fig3.update_layout(barmode='stack', title="Volume By Service Over Time")
+fig3.update_layout(barmode='stack', title="Volume By Service Over Time", yaxis=dict(title="$USD"), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
 
 # -- Normalized Charts
 df_norm_vol = grouped.copy()
