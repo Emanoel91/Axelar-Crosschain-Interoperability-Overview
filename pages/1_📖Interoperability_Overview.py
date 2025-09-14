@@ -382,7 +382,7 @@ color_map = {
     "GMP": "#ff7400"
 }
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
     fig_stacked_fee = px.bar(df_stats_overtime, x="Date", y="Total Gas Fees", color="Service", title="Transfer Gas Fees by Service Over Time", color_discrete_map=color_map)
@@ -390,16 +390,8 @@ with col1:
     st.plotly_chart(fig_stacked_fee, use_container_width=True)
 
 with col2:
-    fig_bubble_path = px.scatter(df_stats_overtime, x="Date", y="Unique Paths", size="Unique Paths", color="Service", text="Unique Paths", 
-                            title="Number of Unique Paths by Service Over Time", size_max=60)
-    fig_bubble_path.update_traces(textposition='middle center')
-    fig_bubble_path.update_layout(yaxis=dict(categoryorder="array", categoryarray=["GMP", "Token Transfers"]), 
-                                  legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
-    st.plotly_chart(fig_bubble_path, use_container_width=True)
-
-with col3:
     fig_grouped_user = px.bar(df_stats_overtime, x="Date", y="Number of Users", color="Service", barmode="group", title="Number of Users by Service Over Time")
-    fig_grouped_user.update_layout(yaxis_title="Wallet count", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
+    fig_grouped_user.update_layout(yaxis_title="Wallet count", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
     st.plotly_chart(fig_grouped_user, use_container_width=True)
 # --- Row 4: Donut Charts -------------------------------------------------------------------------------------------------------------------------------------------------------
 total_gmp_tx = grouped['gmp_num_txs'].sum()
