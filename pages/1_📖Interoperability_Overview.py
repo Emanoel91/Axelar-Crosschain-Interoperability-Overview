@@ -399,6 +399,7 @@ with col2:
 
 with col3:
     fig_grouped_user = px.bar(df_stats_overtime, x="Date", y="Number of Users", color="Service", barmode="group", title="Number of Users by Service Over Time")
+    fig_grouped_user.update_layout(yaxis_title="Wallet count", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
     st.plotly_chart(fig_grouped_user, use_container_width=True)
 # --- Row 4: Donut Charts -------------------------------------------------------------------------------------------------------------------------------------------------------
 total_gmp_tx = grouped['gmp_num_txs'].sum()
