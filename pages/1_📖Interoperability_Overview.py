@@ -136,6 +136,99 @@ grouped = df.groupby('period').agg({
 grouped['total_txs'] = grouped['gmp_num_txs'] + grouped['transfers_num_txs']
 grouped['total_volume'] = grouped['gmp_volume'] + grouped['transfers_volume']
 
+# --- Functions -----------------------------------------------------------------------------------------------------
+# === Number of Unique Chains ===========================
+@st.cache_data
+def load_unique_chains_stats(start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    WITH axelar_service AS (
+  
+  SELECT LOWER(data:send:original_source_chain) AS chain, 
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+    
+  UNION ALL
+
+  SELECT LOWER(data:send:original_destination_chain) AS chain
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+
+  union all
+
+  SELECT  LOWER(data:call.chain::STRING) AS chain
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received'
+
+  union all 
+
+  SELECT LOWER(data:call.returnValues.destinationChain::STRING) AS chain
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received')
+
+SELECT count(distinct chain)-1 as "Unique Chains"
+FROM axelar_service
+where chain is not null
+    """
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Axelar Cross-chain Stats =====================
+@st.cache_data
+def load_crosschain_stats(start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    WITH axelar_service AS (
+  SELECT 
+    created_at, 
+    LOWER(data:send:original_source_chain) AS source_chain, 
+    LOWER(data:send:original_destination_chain) AS destination_chain,
+    sender_address AS user, case 
+      WHEN IS_ARRAY(data:send:fee_value) THEN NULL
+      WHEN IS_OBJECT(data:send:fee_value) THEN NULL
+      WHEN TRY_TO_DOUBLE(data:send:fee_value::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:send:fee_value::STRING)
+      ELSE NULL END AS fee
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+
+  UNION ALL
+
+  SELECT  
+    created_at,
+    LOWER(data:call.chain::STRING) AS source_chain,
+    LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain,
+    data:call.transaction.from::STRING AS user, COALESCE( CASE 
+        WHEN IS_ARRAY(data:gas:gas_used_amount) OR IS_OBJECT(data:gas:gas_used_amount) 
+          OR IS_ARRAY(data:gas_price_rate:source_token.token_price.usd) OR    IS_OBJECT(data:gas_price_rate:source_token.token_price.usd) 
+        THEN NULL
+        WHEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) IS NOT NULL 
+          AND TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING) IS NOT NULL 
+        THEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) * TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING)
+        ELSE NULL END, CASE 
+        WHEN IS_ARRAY(data:fees:express_fee_usd) OR IS_OBJECT(data:fees:express_fee_usd) THEN NULL
+        WHEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING)
+        ELSE NULL END) AS fee
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received')
+
+SELECT count(distinct user) as "Number of Users", round(sum(fee)) as "Total Gas Fees",
+count(distinct (source_chain || '➡' || destination_chain)) as "Unique Paths",
+round(avg(fee),2) as "Avg Gas Fee", round(median(fee),2) as "Median Gas Fee"
+from axelar_service
+where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+    """
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Load Kpi =====================================
+df_unique_chains_stats = load_unique_chains_stats(start_date, end_date)
+df_crosschain_stats = load_crosschain_stats(start_date, end_date)
 # --- KPI Section ---------------------------------------------------------------------------------------------------
 st.markdown("## 📦 Total Transfer Stats")
 
@@ -156,13 +249,27 @@ card_style = """
 total_num_txs = grouped['gmp_num_txs'].sum() + grouped['transfers_num_txs'].sum()
 total_volume = grouped['gmp_volume'].sum() + grouped['transfers_volume'].sum()
 
-col1, col2 = st.columns(2)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown(card_style.format(label="Total Number of Transfers", value=f"{total_num_txs:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Number of Transfers", value=f"{total_num_txs:,} Txns"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="Total Volume of Transfers", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Volume of Transfers", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
+with col3:
+    st.markdown(card_style.format(label="Unique Users", value=f"{df_crosschain_stats['Number of Users'][0]:,} Wallets"), unsafe_allow_html=True)
+with col4:
+    st.markdown(card_style.format(label="Total Gas Fees", value=f"${df_crosschain_stats['Total Gas Fees'][0]:,}"), unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+col5, col6, col7, col8 = st.columns(4)
+with col5:
+    st.markdown(card_style.format(label="Unique Chains", value=f"{df_unique_chains_stats['Unique Chains'][0]:,}"), unsafe_allow_html=True)
+with col6:
+    st.markdown(card_style.format(label="Unique Paths", value=f"{df_crosschain_stats['Unique Paths'][0]:,}"), unsafe_allow_html=True)
+with col7:
+    st.markdown(card_style.format(label="Avg Gas Fee", value=f"${df_crosschain_stats['Avg Gas Fee'][0]:,} Wallets"), unsafe_allow_html=True)
+with col8:
+    st.markdown(card_style.format(label="Median Gas Fee", value=f"${df_crosschain_stats['Median Gas Fee'][0]:,}"), unsafe_allow_html=True)
     
 # --- Row 2: Transactions Over Time ----------------------------------------------------------------------------------
 import streamlit as st
