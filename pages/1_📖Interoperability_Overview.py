@@ -153,13 +153,12 @@ card_style = """
     </div>
 """
 
-# محاسبه مجموع‌ها
-# -- total_num_txs = grouped['gmp_num_txs'].sum() + grouped['transfers_num_txs'].sum()
-# -- total_volume = grouped['gmp_volume'].sum() + grouped['transfers_volume'].sum()
+total_num_txs = grouped['gmp_num_txs'].sum() + grouped['transfers_num_txs'].sum()
+total_volume = grouped['gmp_volume'].sum() + grouped['transfers_volume'].sum()
 
 col1, col2 = st.columns(2)
 with col1:
-    st.markdown(card_style.format(label="Total Number of Transfers", value=f"{total_txs:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Total Number of Transfers", value=f"{total_num_txs:,} Txns"), unsafe_allow_html=True)
 with col2:
     st.markdown(card_style.format(label="Total Volume of Transfers", value=f"${total_volume:,.0f}"), unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
