@@ -215,3 +215,69 @@ with col3:
     st.markdown(card_style.format(label="Unique Users", value=f"{df_interchain_stats['Unique Users'][0]:,} Wallets"), unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# --- Row 2: KPIs ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_deploy_stats(start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    with table1 as (
+SELECT data:interchain_token_deployment_started:tokenId as token, 
+data:call:transaction:from as deployer, COALESCE(CASE 
+        WHEN IS_ARRAY(data:gas:gas_used_amount) OR IS_OBJECT(data:gas:gas_used_amount) 
+          OR IS_ARRAY(data:gas_price_rate:source_token.token_price.usd) OR IS_OBJECT(data:gas_price_rate:source_token.token_price.usd) 
+        THEN NULL
+        WHEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) IS NOT NULL 
+          AND TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING) IS NOT NULL 
+        THEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) * TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING)
+        ELSE NULL
+      END, CASE 
+        WHEN IS_ARRAY(data:fees:express_fee_usd) OR IS_OBJECT(data:fees:express_fee_usd) THEN NULL
+        WHEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING)
+        ELSE NULL
+      END) AS fee
+FROM axelar.axelscan.fact_gmp 
+WHERE status = 'executed' AND simplified_status = 'received' AND (
+data:approved:returnValues:contractAddress ilike '%0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C%' -- Interchain Token Service
+or data:approved:returnValues:contractAddress ilike '%axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr%' -- Axelar ITS Hub
+) AND data:interchain_token_deployment_started:event='InterchainTokenDeploymentStarted'
+and created_at::date>='{start_str}' and created_at::date<='{end_str}')
+
+select count(distinct token) as "Total Number of Deployed Tokens",
+count(distinct deployer) as "Total Number of Token Deployers",
+round(sum(fee)) as "Total Gas Fees"
+from table1
+
+    """
+
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Load Data: Row 1 =================================================
+df_deploy_stats = load_deploy_stats(start_date, end_date)
+# === KPIs: Row 1 ======================================================
+card_style = """
+    <div style="
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        ">
+        <h4 style="margin: 0; font-size: 20px; color: #555;">{label}</h4>
+        <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #000;">{value}</p>
+    </div>
+"""
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.markdown(card_style.format(label="Number of Deployed Tokens", value=f"✨{df_deploy_stats["Total Number of Deployed Tokens"][0]:,}"), unsafe_allow_html=True)
+with col2:
+    st.markdown(card_style.format(label="Number of Token Deployers", value=f"👨‍💻{df_deploy_stats["Total Number of Token Deployers"][0]:,}"), unsafe_allow_html=True)
+with col3:
+    st.markdown(card_style.format(label="Total Gas Fees", value=f"⛽${df_deploy_stats["Total Gas Fees"][0]:,}"), unsafe_allow_html=True)
+
