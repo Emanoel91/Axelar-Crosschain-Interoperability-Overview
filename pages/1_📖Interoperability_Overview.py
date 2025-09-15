@@ -486,154 +486,68 @@ with col3:
     fig_stacked_path = px.bar(df_stats_chain_fee_user_path, x="Service", y="Unique Paths", color="Service", title="Number of Unique Paths by Service", color_discrete_map=color_map)
     fig_stacked_path.update_layout(barmode="stack", yaxis_title="Path count", xaxis_title="")
     st.plotly_chart(fig_stacked_path, use_container_width=True)
-# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# --- Row: Transfers by Source Chain over Time ---
-st.subheader("🔄 Transfers Count by Source Chain Over Time")
+    
+# --- Row 8 -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_new_users_overtime(timeframe, start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
 
-@st.cache_data(ttl=3600)
-def load_chain_transfers(timeframe, start_date, end_date):
     query = f"""
-    WITH axelar_services AS (
-        SELECT created_at,
-               LOWER(data:send:original_source_chain) AS source_chain,
-               LOWER(data:send:original_destination_chain) AS destination_chain,
-               sender_address AS user,
-               data:send:amount * data:link:price AS amount,
-               data:send:fee_value AS fee,
-               id,
-               'Token Transfers' AS service
-        FROM axelar.axelscan.fact_transfers
-        WHERE created_at::date >= '{start_date}'
-          AND created_at::date <= '{end_date}'
-          AND status = 'executed'
-          AND simplified_status = 'received'
+    with table1 as (WITH axelar_service AS (SELECT created_at, sender_address AS user
+FROM axelar.axelscan.fact_transfers
+WHERE status = 'executed' AND simplified_status = 'received'
+UNION ALL
+SELECT created_at, data:call.transaction.from::STRING AS user
+FROM axelar.axelscan.fact_gmp 
+WHERE status = 'executed' AND simplified_status = 'received')
+SELECT date_trunc('{timeframe}',created_at) as "Date", count(distinct user) as "Total Users"
+FROM axelar_service
+where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+group by 1),
+table2 as (with tab1 as (WITH axelar_service AS (
+SELECT created_at, sender_address AS user
+FROM axelar.axelscan.fact_transfers
+WHERE status = 'executed' AND simplified_status = 'received'
+UNION ALL
+SELECT created_at, data:call.transaction.from::STRING AS user
+FROM axelar.axelscan.fact_gmp 
+WHERE status = 'executed' AND simplified_status = 'received')
+SELECT user, min(created_at::date) as first_date
+FROM axelar_service
+group by 1)
+select date_trunc('{timeframe}',first_date) as "Date", count(distinct user) as "New Users",
+sum("New Users") over (order by "Date") as "User Growth"
+from tab1
+where first_date>='{start_str}' and first_date<='{end_str}'
+group by 1)
+select table1."Date" as "Date", "Total Users", "New Users", "Total Users"-"New Users" as "Returning Users",
+"User Growth", round((("New Users"/"Total Users")*100),2) as "%New User Rate"
+from table1 left join table2 on table1."Date"=table2."Date"
+order by 1
 
-        UNION ALL
-
-        SELECT created_at,
-               TO_VARCHAR(LOWER(data:call:chain)) AS source_chain,
-               TO_VARCHAR(LOWER(data:call:returnValues:destinationChain)) AS destination_chain,
-               TO_VARCHAR(data:call:transaction:from) AS user,
-               data:value AS amount,
-               COALESCE(
-                   ((data:gas:gas_used_amount) * (data:gas_price_rate:source_token.token_price.usd)),
-                   TRY_CAST(data:fees:express_fee_usd::float AS FLOAT)
-               ) AS fee,
-               TO_VARCHAR(id) AS id,
-               'GMP' AS service
-        FROM axelar.axelscan.fact_gmp
-        WHERE created_at::date >= '{start_date}'
-          AND created_at::date <= '{end_date}'
-          AND status = 'executed'
-          AND simplified_status = 'received'
-    )
-
-    SELECT DATE_TRUNC('{timeframe}', created_at) AS "Date",
-           source_chain AS "Source Chain",
-           COUNT(DISTINCT id) AS "Transfer Count",
-           SUM(COUNT(DISTINCT id)) OVER (PARTITION BY source_chain ORDER BY DATE_TRUNC('{timeframe}', created_at)) AS "Total Transfers Count"
-    FROM axelar_services
-    GROUP BY 1, 2
-    ORDER BY 1
     """
-    return pd.read_sql(query, conn)
+    df = pd.read_sql(query, conn)
+    return df
 
-# --- Load and Check ----------------------------------------------------
-df_transfers = load_chain_transfers(timeframe, start_date, end_date)
+# === Load Data: Row 8 ========================================================
+df_new_users_overtime = load_new_users_overtime(timeframe, start_date, end_date)
+# === Charts: Row 8 ============================================================
+col1, col2 = st.columns(2)
 
-if not df_transfers.empty:
-    # --- Chart 1: Transfer Count per Source Chain over Time (Stacked Bar) ---
-    fig_stack_bar = px.bar(
-        df_transfers,
-        x="Date",
-        y="Transfer Count",
-        color="Source Chain",
-        title="Transfers Count by Source Chain",
-    )
+with col1:
+    fig_b1 = go.Figure()
+    # Stacked Bars
+    fig_b1.add_trace(go.Bar(x=df_new_users_overtime["Date"], y=df_new_users_overtime["New Users"], name="New Users", marker_color="#52d476"))
+    fig_b1.add_trace(go.Bar(x=df_new_users_overtime["Date"], y=df_new_users_overtime["Returning Users"], name="Returning Users", marker_color="#fda569"))
+    fig_b1.add_trace(go.Scatter(x=df_new_users_overtime["Date"], y=df_new_users_overtime["Total Users"], name="Total Users", mode="lines", line=dict(color="black", width=2)))
+    fig_b1.update_layout(barmode="stack", title="Number of Axelar Users Over Time", yaxis=dict(title="Wallet count"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+    st.plotly_chart(fig_b1, use_container_width=True)
 
-    # --- Chart 2: Cumulative Transfers per Source Chain (Line) ---
-    fig_line = px.line(
-        df_transfers,
-        x="Date",
-        y="Total Transfers Count",
-        color="Source Chain",
-        title="Cumulative Transfers Count by Source Chain",
-    )
-
-    col1, col2 = st.columns(2)
-    col1.plotly_chart(fig_stack_bar, use_container_width=True)
-    col2.plotly_chart(fig_line, use_container_width=True)
-else:
-    st.warning("No transfer data found for selected period.")
-
-# --- Row: Top Source Chains by Transfer Count ----------------------------------------------------------------------------------------------------------------
-st.subheader("📤 Source Chains by Number of Transfers")
-
-@st.cache_data(ttl=3600)
-def load_top_source_chains(start_date, end_date):
-    query = f"""
-    WITH axelar_services AS (
-        SELECT created_at,
-               LOWER(data:send:original_source_chain) AS source_chain,
-               id
-        FROM axelar.axelscan.fact_transfers
-        WHERE created_at::date >= '{start_date}'
-          AND created_at::date <= '{end_date}'
-          AND status = 'executed'
-          AND simplified_status = 'received'
-
-        UNION ALL
-
-        SELECT created_at,
-               TO_VARCHAR(LOWER(data:call:chain)) AS source_chain,
-               TO_VARCHAR(id) AS id
-        FROM axelar.axelscan.fact_gmp
-        WHERE created_at::date >= '{start_date}'
-          AND created_at::date <= '{end_date}'
-          AND status = 'executed'
-          AND simplified_status = 'received'
-    )
-
-    SELECT 
-        source_chain AS "Source Chain",
-        COUNT(DISTINCT id) AS "Transfer Count"
-    FROM axelar_services
-    GROUP BY 1
-    ORDER BY 2 DESC
-    """
-    return pd.read_sql(query, conn)
-
-# --- Load data ---
-top_chains_df = load_top_source_chains(start_date, end_date)
-
-if not top_chains_df.empty:
-    # --- Reset index to start from 1 ---
-    top_chains_df = top_chains_df.reset_index(drop=True)
-    top_chains_df.index += 1  # Start index from 1
-
-    # --- Display Table ---
-    col1, col2 = st.columns([0.5, 0.5])
-
-    with col1:
-        # -- st.markdown("**Top Source Chains Table**")
-        st.dataframe(top_chains_df, use_container_width=True)
-
-    # --- Bar Chart for Top 10 Chains ---
-    top10_df = top_chains_df.head(10)
-
-    fig_barh = px.bar(
-        top10_df.sort_values("Transfer Count"),  # sort ascending for horizontal layout
-        x="Transfer Count",
-        y="Source Chain",
-        orientation='h',
-        color="Source Chain",
-        text="Transfer Count",
-        title="🏆Top 10 Source Chains by Transfers Count"
-    )
-    fig_barh.update_traces(textposition='outside')
-    fig_barh.update_layout(showlegend=False)
-
-    with col2:
-        st.plotly_chart(fig_barh, use_container_width=True)
-else:
-    st.warning("No source chain data found for the selected period.")
+with col2:
+    fig2 = px.area(df_new_users_overtime, x="Date", y="User Growth", title="Interchain Users Growth Over Time", color_discrete_sequence=["#52d476"])
+    fig2.add_trace(go.Scatter(x=df_new_users_overtime["Date"], y=df_new_users_overtime["%New User Rate"], name="%New User Rate", mode="lines", yaxis="y2", line=dict(color="#ff6b05")))
+    fig2.update_layout(xaxis_title="", yaxis_title="wallet count",  yaxis2=dict(title="%", overlaying="y", side="right"), template="plotly_white")
+    st.plotly_chart(fig2, use_container_width=True)
