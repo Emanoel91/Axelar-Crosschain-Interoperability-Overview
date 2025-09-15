@@ -709,7 +709,7 @@ st.dataframe(df_display, use_container_width=True)
 
 # --- Row 10: destination chain analysis -------------------------------------------------------------------------------------------------------------------------------------------
 st.subheader("📥Destination Chain Tracking")
-service_filter = st.selectbox("Select the Service:", options=["GMP & Token Transfers", "GMP", "Token Transfers"], index=0)
+# -- service_filter = st.selectbox("Select the Service:", options=["GMP & Token Transfers", "GMP", "Token Transfers"], index=0)
 
 @st.cache_data
 def load_destination_chain_tracking(start_date, end_date, service_filter):
@@ -717,11 +717,11 @@ def load_destination_chain_tracking(start_date, end_date, service_filter):
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
 
-    service_condition = ""
-    if service_filter == "GMP":
-        service_condition = "AND \"Service\" = 'GMP'"
-    elif service_filter == "Token Transfers":
-        service_condition = "AND \"Service\" = 'Token Transfers'"
+# --    service_condition = ""
+# --    if service_filter == "GMP":
+# --        service_condition = "AND \"Service\" = 'GMP'"
+# --    elif service_filter == "Token Transfers":
+# --        service_condition = "AND \"Service\" = 'Token Transfers'"
 
     query = f"""
     WITH axelar_service AS (
