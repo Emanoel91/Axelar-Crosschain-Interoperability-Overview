@@ -555,20 +555,13 @@ with col2:
 
 # --- Row 9: source chain analysis -------------------------------------------------------------------------------------------------------------------------------------------------
 st.subheader("📤Source Chain Tracking")
-# === Sidebar filters ================================================================
-service_filter = st.selectbox(
-    "🔎Select the Service:",
-    options=["GMP & Token Transfers", "GMP", "Token Transfers"],
-    index=0
-)
+service_filter = st.selectbox("Select the Service:", options=["GMP & Token Transfers", "GMP", "Token Transfers"], index=0)
 
-# === Load Data ======================================================================
 @st.cache_data
 def load_source_chain_tracking(start_date, end_date, service_filter):
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
 
-    # شرط فیلتر بر اساس Service
     service_condition = ""
     if service_filter == "GMP":
         service_condition = "AND \"Service\" = 'GMP'"
@@ -706,7 +699,7 @@ sort_options = [
     "📊Avg Gas Fee($)",
     "📋Median Gas Fee"
 ]
-sort_by = st.selectbox("📌 Sort by:", options=sort_options, index=0
+sort_by = st.selectbox("Sort by:", options=sort_options, index=0
                       )
 df_display = df_source_chain_tracking.sort_values(by=sort_by, ascending=False).copy()
 df_display = df_display.reset_index(drop=True)
@@ -715,11 +708,20 @@ df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float
 st.dataframe(df_display, use_container_width=True)
 
 # --- Row 10: destination chain analysis -------------------------------------------------------------------------------------------------------------------------------------------
+st.subheader("📥Destination Chain Tracking")
+service_filter = st.selectbox("Select the Service:", options=["GMP & Token Transfers", "GMP", "Token Transfers"], index=0)
+
 @st.cache_data
-def load_destination_chain_tracking(start_date, end_date):
+def load_destination_chain_tracking(start_date, end_date, service_filter):
     
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
+
+    service_condition = ""
+    if service_filter == "GMP":
+        service_condition = "AND \"Service\" = 'GMP'"
+    elif service_filter == "Token Transfers":
+        service_condition = "AND \"Service\" = 'Token Transfers'"
 
     query = f"""
     WITH axelar_service AS (
@@ -809,7 +811,9 @@ round(sum(fee)) as "⛽Total Gas Fees($)", count(distinct source_chain) as "📤
 count(distinct raw_asset) as "💎Number of Tokens", round(avg(fee),2) as "📊Avg Gas Fee($)", 
 round(median(fee),2) as "📋Median Gas Fee"
 FROM axelar_service
-where created_at::date>='{start_str}' and created_at::date<='{end_str}' and
+where created_at::date>='{start_str}' and created_at::date<='{end_str}' 
+{service_condition}
+and
 id not in ('6f01df90bcb4d456c28d85a1f754f1c9c37b922885ea61f915e013aa8a20a5c6_osmosis',
 '0b2b03ecd8c48bb3342754a401240fe5e421a3d74a40def8c1b77758a1976f52_osmosis',
 '21074a86b299d4eaff74645ab8edc22aa3639a36e82df8e7fddfb3c78e8c7250_osmosis',
@@ -836,7 +840,7 @@ order by 2 desc
     return df
 
 # === Load Data ======================================================================
-df_destination_chain_tracking = load_destination_chain_tracking(start_date, end_date)
+df_destination_chain_tracking = load_destination_chain_tracking(start_date, end_date, service_filter)
 
 # === Tables =========================================================================
 st.subheader("📥Destination Chain Tracking")
