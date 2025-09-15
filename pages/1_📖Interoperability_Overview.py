@@ -968,7 +968,7 @@ order by 2 desc
 df_path_tracking = load_path_tracking(start_date, end_date)
 
 # === Tables =========================================================================
-st.subheader("📥Destination Chain Tracking")
+st.subheader("🎯Path Tracking")
 # Criteria list
 sort_options = [
     "🚀Number of Transfers",
