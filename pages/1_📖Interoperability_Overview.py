@@ -690,7 +690,8 @@ sort_options = [
     "📊Avg Gas Fee($)",
     "📋Median Gas Fee"
 ]
-sort_by = st.selectbox("📌 Sort by:", options=sort_options, index=0  # پیشفرض: Number of Transfers)
+sort_by = st.selectbox("📌 Sort by:", options=sort_options, index=0
+                      )
 df_display = df_source_chain_tracking.sort_values(by=sort_by, ascending=False).copy()
 df_display.index = df_display.index + 1
 df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
