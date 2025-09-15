@@ -717,11 +717,11 @@ def load_destination_chain_tracking(start_date, end_date, service_filter):
     start_str = start_date.strftime("%Y-%m-%d")
     end_str = end_date.strftime("%Y-%m-%d")
 
-# --    service_condition = ""
-# --    if service_filter == "GMP":
-# --        service_condition = "AND \"Service\" = 'GMP'"
-# --    elif service_filter == "Token Transfers":
-# --        service_condition = "AND \"Service\" = 'Token Transfers'"
+    service_condition = ""
+    if service_filter == "GMP":
+        service_condition = "AND \"Service\" = 'GMP'"
+    elif service_filter == "Token Transfers":
+        service_condition = "AND \"Service\" = 'Token Transfers'"
 
     query = f"""
     WITH axelar_service AS (
