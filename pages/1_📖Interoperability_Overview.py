@@ -554,9 +554,10 @@ with col2:
     st.plotly_chart(fig2, use_container_width=True)
 
 # --- Row 9: source chain analysis -------------------------------------------------------------------------------------------------------------------------------------------------
+st.subheader("📤Source Chain Tracking")
 # === Sidebar filters ================================================================
 service_filter = st.selectbox(
-    "🔎 انتخاب نوع Service:",
+    "🔎Select the Service:",
     options=["GMP & Token Transfers", "GMP", "Token Transfers"],
     index=0
 )
@@ -694,7 +695,6 @@ order by 2 desc
 df_source_chain_tracking = load_source_chain_tracking(start_date, end_date, service_filter)
 
 # === Tables =========================================================================
-st.subheader("📤Source Chain Tracking")
 # Criteria list
 sort_options = [
     "🚀Number of Transfers",
