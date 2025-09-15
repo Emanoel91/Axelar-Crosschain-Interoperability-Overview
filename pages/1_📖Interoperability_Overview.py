@@ -552,3 +552,30 @@ with col2:
     fig2.update_layout(xaxis_title="", yaxis_title="wallet count",  yaxis2=dict(title="%", overlaying="y", side="right"), template="plotly_white",
                       legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
     st.plotly_chart(fig2, use_container_width=True)
+
+# --- Row 9: source chain analysis -------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_source_chain_tracking(timeframe, start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    0000
+
+    """
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Load Data ======================================================================
+df_source_chain_tracking = load_source_chain_tracking(timeframe, start_date, end_date)
+# === Tables =========================================================================
+st.subheader("📤Source Chain Tracking")
+df_display = df_source_chain_tracking.copy()
+df_display.index = df_display.index + 1
+df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
+st.dataframe(df_display, use_container_width=True)
+# --- Row 10: destination chain analysis -------------------------------------------------------------------------------------------------------------------------------------------
+
+# --- Row 11: paths analysis ------------------------------------------------------------------------------------------------------------------------------------------------
+
