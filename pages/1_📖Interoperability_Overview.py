@@ -553,9 +553,12 @@ with col2:
                       legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
     st.plotly_chart(fig2, use_container_width=True)
 
+# --- Tables 9, 10, 11: Command! ---------------------------------------------------------------------------------------------------------------------------------------------------
+st.info("🏁 Select an Axelar service from the menu below to view its results.")
+service_filter = st.selectbox("Select the Service:", options=["GMP & Token Transfers", "GMP", "Token Transfers"], index=0)
+
 # --- Row 9: source chain analysis -------------------------------------------------------------------------------------------------------------------------------------------------
 st.subheader("📤Source Chain Tracking")
-service_filter = st.selectbox("Select the Service:", options=["GMP & Token Transfers", "GMP", "Token Transfers"], index=0)
 
 @st.cache_data
 def load_source_chain_tracking(start_date, end_date, service_filter):
