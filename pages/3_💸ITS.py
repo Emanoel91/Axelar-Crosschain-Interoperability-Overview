@@ -59,7 +59,7 @@ st.sidebar.markdown(
 )
 
 # --- Title & Info Messages ---------------------------------------------------------------------------------------------
-st.title("📖Interoperability Overview")
+st.title("💸Interchain Token Service (ITS)")
 
 st.info("📊 Charts initially display data for a default time range. Select a custom range to view results for your desired period.")
 st.info("⏳ On-chain data retrieval may take a few moments. Please wait while the results load.")
