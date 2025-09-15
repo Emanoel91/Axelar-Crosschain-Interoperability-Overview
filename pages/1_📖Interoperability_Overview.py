@@ -676,12 +676,26 @@ order by 2 desc
 
 # === Load Data ======================================================================
 df_source_chain_tracking = load_source_chain_tracking(start_date, end_date)
+
 # === Tables =========================================================================
 st.subheader("📤Source Chain Tracking")
-df_display = df_source_chain_tracking.copy()
+# Criteria list
+sort_options = [
+    "🚀Number of Transfers",
+    "👥Number of Users",
+    "💸Volume of Transfers($)",
+    "⛽Total Gas Fees($)",
+    "📥#Destination Chains",
+    "💎Number of Tokens",
+    "📊Avg Gas Fee($)",
+    "📋Median Gas Fee"
+]
+sort_by = st.selectbox("📌 Sort by:", options=sort_options, index=0  # پیشفرض: Number of Transfers)
+df_display = df_source_chain_tracking.sort_values(by=sort_by, ascending=False).copy()
 df_display.index = df_display.index + 1
 df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
 st.dataframe(df_display, use_container_width=True)
+
 # --- Row 10: destination chain analysis -------------------------------------------------------------------------------------------------------------------------------------------
 
 # --- Row 11: paths analysis ------------------------------------------------------------------------------------------------------------------------------------------------
