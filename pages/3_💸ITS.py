@@ -397,15 +397,7 @@ else:
 
     df_display["Logo"] = df_display["Logo"].apply(logo_html)
 
-    st.subheader("📑 Interchain Token Transfers Table")
-
-    scrollable_table = f"""
-    <div style="max-height:700px; overflow-y:auto;">
-        {df_display.to_html(escape=False, index=False)}
-    </div>
-    """
-
-    st.write(scrollable_table, unsafe_allow_html=True)
+    
 
     # --- chart 1: Top 10 by Volume (without Unknown) -------------------------------------------------------------------
     df_grouped = (
