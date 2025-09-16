@@ -374,7 +374,8 @@ with col1:
     
     fig1.add_trace(go.Bar(x=df_chart["Date"], y=df_chart["Bridges"], name="Bridges", yaxis="y1", marker_color="#ff7f27"))
     fig1.add_trace(go.Scatter(x=df_chart["Date"], y=df_chart["Users"], name="Users", mode="lines", yaxis="y2", line=dict(color="#0ed145", width=2, dash="solid")))
-    fig1.update_layout(title="Number of Bridges & Users Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="Wallet count", overlaying="y", side="right"), barmode="group")
+    fig1.update_layout(title="Number of Bridges & Users Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="Wallet count", overlaying="y", side="right"), barmode="group",
+                      legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
     st.plotly_chart(fig1, use_container_width=True)
 
 with col2:
@@ -382,7 +383,8 @@ with col2:
     fig2.add_trace(go.Bar(x=df_chart["Date"], y=df_chart["Bridge Amount"], name="Bridge Amount", yaxis="y1", marker_color="#ff7f27")) 
     fig2.add_trace(go.Scatter(x=df_chart["Date"], y=df_chart["Total Bridge Amount"], name="Total Bridge Amount", mode="lines", yaxis="y2", 
                               line=dict(color="#0ed145", width=2, dash="solid")))
-    fig2.update_layout(title="Bridge Volume Over Time", yaxis=dict(title="$USD"), yaxis2=dict(title="$USD", overlaying="y", side="right"), barmode="group")
+    fig2.update_layout(title="Bridge Volume Over Time", yaxis=dict(title="$USD"), yaxis2=dict(title="$USD", overlaying="y", side="right"), barmode="group",
+                      legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
     st.plotly_chart(fig2, use_container_width=True)
 
 # --- Row 4,left --------------------------------------------------------------------------------------------------------------
@@ -452,20 +454,13 @@ def load_bridgors_data(timeframe, start_date, end_date):
             )
             SELECT user, min(created_at::date) as first_date
             FROM axelar_service
-            GROUP BY 1
-        )
+            GROUP BY 1)
         SELECT date_trunc('{timeframe}', first_date) as "Date", count(distinct user) as "New Bridgors"
         FROM tab1
         WHERE first_date >= '{start_str}' AND first_date <= '{end_str}'
-        GROUP BY 1
-    )
-
-    SELECT 
-        t1."Date" as "Date", 
-        "Total Bridgors", 
-        "New Bridgors", 
-        "Total Bridgors" - "New Bridgors" as "Returning Bridgors",
-        sum("New Bridgors") over (order by t1."Date") as "Bridgors Growth"
+        GROUP BY 1)
+    SELECT t1."Date" as "Date", "Total Bridgors", "New Bridgors", "Total Bridgors" - "New Bridgors" as "Returning Bridgors", 
+    sum("New Bridgors") over (order by t1."Date") as "Bridgors Growth"
     FROM table1 t1
     LEFT JOIN table2 t2 ON t1."Date" = t2."Date"
     ORDER BY 1
@@ -608,20 +603,11 @@ col1, col2 = st.columns(2)
 
 with col1:
     fig_b1 = go.Figure()
-    # Stacked Bars
     fig_b1.add_trace(go.Bar(x=df_brg["Date"], y=df_brg["New Bridgors"], name="New Users", marker_color="yellow"))
     fig_b1.add_trace(go.Bar(x=df_brg["Date"], y=df_brg["Returning Bridgors"], name="Returning Users", marker_color="red"))
-    # Line for Total Bridgors
-    fig_b1.add_trace(go.Scatter(
-        x=df_brg["Date"], y=df_brg["Total Bridgors"], name="Total Users",
-        mode="lines", line=dict(color="blue", width=2)
-    ))
-    fig_b1.update_layout(
-        barmode="stack",
-        title="Number of Users by Type Over Time",
-        yaxis=dict(title="Wallet count"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
-    )
+    fig_b1.add_trace(go.Scatter(x=df_brg["Date"], y=df_brg["Total Bridgors"], name="Total Users", mode="lines", line=dict(color="blue", width=2)))
+    fig_b1.update_layout(barmode="stack", title="Number of Users by Type Over Time", yaxis=dict(title="Wallet count"),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
     st.plotly_chart(fig_b1, use_container_width=True)
 
 with col2:
