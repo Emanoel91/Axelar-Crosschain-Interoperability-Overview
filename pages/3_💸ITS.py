@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+import time
 
 # --- Page Config: Tab Title & Icon -------------------------------------------------------------------------------------
 st.set_page_config(
