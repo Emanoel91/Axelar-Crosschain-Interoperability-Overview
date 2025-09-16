@@ -237,13 +237,13 @@ card_style = """
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown(card_style.format(label="💸Volume of Bridging", value=f"${df_kpi["Total Bridges Volume"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridging Volume", value=f"${df_kpi["Total Bridges Volume"][0]:,}"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="🔄Number of Bridging Transactions", value=f"{df_kpi["Total Number of Bridges"][0]:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridging Transactions", value=f"{df_kpi["Total Number of Bridges"][0]:,} Txns"), unsafe_allow_html=True)
 with col3:
-    st.markdown(card_style.format(label="👥Number of Unique Users", value=f"{df_kpi["Total Numebr of Users"][0]:,} Wallets"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Unique Users", value=f"{df_kpi["Total Numebr of Users"][0]:,} Wallets"), unsafe_allow_html=True)
 with col4:
-    st.markdown(card_style.format(label="💎Number of Bridged Tokens", value=f"{df_kpi["Number of Supported Tokens"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridged Tokens", value=f"{df_kpi["Number of Supported Tokens"][0]:,}"), unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
