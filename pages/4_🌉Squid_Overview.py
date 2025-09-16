@@ -630,5 +630,5 @@ with col2:
     df_percent["Percentage"] = df_percent["Bridge Amount"] / monthly_total * 100
     fig_normalized = px.bar(df_percent, x="Date", y="Percentage", color="User Status",
                         title="Share of Bridge Volume by User Type", barmode="stack", color_discrete_map={"New Users": "yellow", "Returning Users": "red"}                        )
-    col1.plotly_chart(fig_normalized)
+    col2.plotly_chart(fig_normalized)
     
