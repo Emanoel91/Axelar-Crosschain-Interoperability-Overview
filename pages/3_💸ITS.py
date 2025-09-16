@@ -95,7 +95,7 @@ conn = snowflake.connector.connect(
     schema=schema
 )
 
-# --- Time Frame & Period Selection --------------------------------------------------------------------------------------
+# --- Time Frame & Period Selection ----------------------------------------------------------------------------------------------------------------------------------------------
 col1, col2, col3 = st.columns(3)
 with col1:
     timeframe = st.selectbox("Select Time Frame", ["month", "week", "day"])
@@ -150,9 +150,9 @@ where created_at::date>='{start_str}' and created_at::date<='{end_str}'
     df = pd.read_sql(query, conn)
     return df
 
-# --- Load Data --------------------------------------------------------------------------------------------------------------------
+# === Load Data =================================================
 df_interchain_stats = load_interchain_stats(start_date, end_date)
-# ---Axelarscan api ----------------------------------------------------------------------------------------------------------------
+# === Axelarscan api ============================================
 api_urls = [
     "https://api.axelarscan.io/gmp/GMPChart?contractAddress=0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C",
     "https://api.axelarscan.io/gmp/GMPChart?contractAddress=axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr"
@@ -169,11 +169,11 @@ for url in api_urls:
     else:
         st.error(f"Failed to fetch data from {url}")
 
-# --- Combine and Filter ------------------------------------------------------------------------------------------------
+# === Combine and Filter ===============================================================================
 df_all = pd.concat(dfs)
 df_all = df_all[(df_all["timestamp"].dt.date >= start_date) & (df_all["timestamp"].dt.date <= end_date)]
 
-# --- Aggregate by Timeframe ----------------------------------------------------------------------------------------
+# === Aggregate by Timeframe ============================================================================
 if timeframe == "week":
     df_all["period"] = df_all["timestamp"].dt.to_period("W").apply(lambda r: r.start_time)
 elif timeframe == "month":
@@ -190,7 +190,7 @@ agg_df = agg_df.sort_values("period")
 agg_df["cum_num_txs"] = agg_df["num_txs"].cumsum()
 agg_df["cum_volume"] = agg_df["volume"].cumsum()
 
-# --- KPIs -----------------------------------------------------------------------------------------------------------
+# === KPIs ===============================================================================================
 card_style = """
     <div style="
         background-color: #f9f9f9;
@@ -282,7 +282,7 @@ with col2:
 with col3:
     st.markdown(card_style.format(label="Total Gas Fees", value=f"⛽${df_deploy_stats["Total Gas Fees"][0]:,}"), unsafe_allow_html=True)
 
-# --- Row 3 ---------------------------------------------------------------------------------------------------------------------------------------------------------
+# --- Row 3 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # === Number of Tokens Deployed =====================================
 @st.cache_data
 def load_deployed_tokens(timeframe, start_date, end_date):
@@ -291,17 +291,14 @@ def load_deployed_tokens(timeframe, start_date, end_date):
     end_str = end_date.strftime("%Y-%m-%d")
 
     query = f"""
-    SELECT date_trunc('{timeframe}',created_at) as "Date", count(distinct data:interchain_token_deployment_started:tokenId) as "Number of Tokens", case 
-when (call:receipt:logs[0]:address ilike '%0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C%' or 
-call:receipt:logs[0]:address ilike '%axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr%') then 'Existing Tokens'
-else 'Newly Minted Token' end as "Token Type"
+    SELECT date_trunc('{timeframe}',created_at) as "Date", count(distinct data:interchain_token_deployment_started:tokenId) as "Number of Tokens"
 FROM axelar.axelscan.fact_gmp 
 WHERE status = 'executed' AND simplified_status = 'received' AND (
 data:approved:returnValues:contractAddress ilike '%0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C%' -- Interchain Token Service
 or data:approved:returnValues:contractAddress ilike '%axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr%' -- Axelar ITS Hub
 ) AND data:interchain_token_deployment_started:event='InterchainTokenDeploymentStarted'
 AND created_at::date>='{start_str}' and created_at::date<='{end_str}'
-group by 1, 3 
+group by 1
 order by 1
 
     """
@@ -311,10 +308,7 @@ order by 1
 # === Load Data ==========================================================
 df_deployed_tokens = load_deployed_tokens(timeframe, start_date, end_date)
 # === Charts: Row 3 ======================================================
-color_map = {
-    "Existing Tokens": "#858dff",
-    "Newly Minted Token": "#fc9047"
-}
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -327,10 +321,9 @@ with col1:
     col1.plotly_chart(fig1, use_container_width=True)
 
 with col2:
-    fig_stacked_tokens = px.bar(df_deployed_tokens, x="Date", y="Number of Tokens", color="Token Type", title="Number of Tokens Deployed Over Time", color_discrete_map=color_map)
-    fig_stacked_tokens.update_layout(barmode="stack", yaxis_title="Number of Tokens", xaxis_title="", 
-                                     legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
-    st.plotly_chart(fig_stacked_tokens, use_container_width=True)
+    fig2 = px.bar(df_deployed_tokens, x="Date", y="Number of Tokens", title="Number of Tokens Deployed Over Time", color_discrete_sequence=["#ff7f27"])
+    fig2.update_layout(xaxis_title="", yaxis_title="number of tokens", bargap=0.2)
+    st.plotly_chart(fig2, use_container_width=True)
 
 # --- Row 4 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # --- Convert date to unix (sec) ----------------------------------------------------------------------------------
