@@ -603,9 +603,9 @@ col1, col2 = st.columns(2)
 
 with col1:
     fig_b1 = go.Figure()
-    fig_b1.add_trace(go.Bar(x=df_brg["Date"], y=df_brg["New Bridgors"], name="New Users", marker_color="yellow"))
-    fig_b1.add_trace(go.Bar(x=df_brg["Date"], y=df_brg["Returning Bridgors"], name="Returning Users", marker_color="red"))
-    fig_b1.add_trace(go.Scatter(x=df_brg["Date"], y=df_brg["Total Bridgors"], name="Total Users", mode="lines", line=dict(color="blue", width=2)))
+    fig_b1.add_trace(go.Bar(x=df_brg["Date"], y=df_brg["New Bridgors"], name="New Users", marker_color="#0ed145"))
+    fig_b1.add_trace(go.Bar(x=df_brg["Date"], y=df_brg["Returning Bridgors"], name="Returning Users", marker_color="#ff7f27"))
+    fig_b1.add_trace(go.Scatter(x=df_brg["Date"], y=df_brg["Total Bridgors"], name="Total Users", mode="lines", line=dict(color="black", width=2)))
     fig_b1.update_layout(barmode="stack", title="Number of Users by Type Over Time", yaxis=dict(title="Wallet count"),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
     st.plotly_chart(fig_b1, use_container_width=True)
@@ -615,7 +615,7 @@ with col2:
     monthly_total = df_percent.groupby("Date")["Bridge Amount"].transform("sum")
     df_percent["Percentage"] = df_percent["Bridge Amount"] / monthly_total * 100
     fig_normalized = px.bar(df_percent, x="Date", y="Percentage", color="User Status",
-                        title="Share of Bridge Volume by User Type", barmode="stack", color_discrete_map={"New Users": "yellow", "Returning Users": "red"})
+                        title="Share of Bridge Volume by User Type", barmode="stack", color_discrete_map={"New Users": "#0ed145", "Returning Users": "#ff7f27"})
     fig_normalized.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5), legend_title_text="")
     col2.plotly_chart(fig_normalized)
     
