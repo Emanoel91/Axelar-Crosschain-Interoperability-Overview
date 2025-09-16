@@ -282,23 +282,47 @@ with col3:
     st.markdown(card_style.format(label="Total Gas Fees", value=f"⛽${df_deploy_stats["Total Gas Fees"][0]:,}"), unsafe_allow_html=True)
 
 # --- Row 3 ---------------------------------------------------------------------------------------------------------------------------------------------------------
+# === Number of Tokens Deployed =====================================
+@st.cache_data
+def load_deployed_tokens(timeframe, start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    SELECT date_trunc('{timeframe}',created_at) as "Date", count(distinct data:interchain_token_deployment_started:tokenId) as "Number of Tokens", case 
+when (call:receipt:logs[0]:address ilike '%0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C%' or 
+call:receipt:logs[0]:address ilike '%axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr%') then 'Existing Tokens'
+else 'Newly Minted Token' end as "Token Type"
+FROM axelar.axelscan.fact_gmp 
+WHERE status = 'executed' AND simplified_status = 'received' AND (
+data:approved:returnValues:contractAddress ilike '%0xB5FB4BE02232B1bBA4dC8f81dc24C26980dE9e3C%' -- Interchain Token Service
+or data:approved:returnValues:contractAddress ilike '%axelar1aqcj54lzz0rk22gvqgcn8fr5tx4rzwdv5wv5j9dmnacgefvd7wzsy2j2mr%' -- Axelar ITS Hub
+) AND data:interchain_token_deployment_started:event='InterchainTokenDeploymentStarted'
+AND created_at::date>='{start_str}' and created_at::date<='{end_str}'
+group by 1, 3 
+order by 1
+
+    """
+
+    df = pd.read_sql(query, conn)
+    return df
+# === Load Data ==========================================================
+df_deployed_tokens = load_deployed_tokens(timeframe, start_date, end_date)
+# === Charts: Row 3 ======================================================
 col1, col2 = st.columns(2)
 
 with col1:
 
     fig1 = go.Figure()
-    fig1.add_trace(go.Bar(x=agg_df["period"], y=agg_df["num_txs"], name="Transfers", yaxis="y1", marker_color="#ff7f27"))
-    fig1.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["cum_num_txs"], name="Total Transfers", yaxis="y2", mode="lines", line=dict(color="black")))
-    fig1.update_layout(title="Number of Interchain Transfers Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="Txns count", overlaying="y", side="right"),
+    fig1.add_trace(go.Bar(x=agg_df["period"], y=agg_df["num_txs"], name="Number of Transfers", yaxis="y1", marker_color="#ff7f27"))
+    fig1.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["volume"], name="Volume of Transfers", yaxis="y2", mode="lines", line=dict(color="blue")))
+    fig1.update_layout(title="Interchain Transfers Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="$USD", overlaying="y", side="right"),
         xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
     col1.plotly_chart(fig1, use_container_width=True)
 
 with col2:
-    
-    fig2 = go.Figure()
-    fig2.add_trace(go.Bar(x=agg_df["period"], y=agg_df["volume"], name="Volume", yaxis="y1", marker_color="#ff7f27"))
-    fig2.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["cum_volume"],name="Total Volume", yaxis="y2", mode="lines", line=dict(color="black")))
-    fig2.update_layout(title="Volume of Interchain Transfers Over Time", yaxis=dict(title="$USD"), yaxis2=dict(title="$USD", overlaying="y", side="right"), xaxis_title="",
-        legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
-    col2.plotly_chart(fig2, use_container_width=True)
+    fig_stacked_tokens = px.bar(df_deployed_tokens, x="Date", y="Number of Tokens", color="Token Type", title="Number of Tokens Deployed Over Time", color_discrete_map=color_map)
+    fig_stacked_tokens.update_layout(barmode="stack", yaxis_title="Number of Tokens", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
+    st.plotly_chart(fig_stacked_tokens, use_container_width=True)
 
