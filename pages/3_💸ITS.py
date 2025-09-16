@@ -281,3 +281,20 @@ with col2:
 with col3:
     st.markdown(card_style.format(label="Total Gas Fees", value=f"⛽${df_deploy_stats["Total Gas Fees"][0]:,}"), unsafe_allow_html=True)
 
+# --- Row 3 ---------------------------------------------------------------------------------------------------------------------------------------------------------
+# Number of Interchain Transfers Over Time
+fig1 = go.Figure()
+fig1.add_trace(go.Bar(x=agg_df["period"], y=agg_df["num_txs"], name="Transfers", yaxis="y1", marker_color="#ff7f27"))
+fig1.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["cum_num_txs"], name="Total Transfers", yaxis="y2", mode="lines", line=dict(color="black")))
+fig1.update_layout(title="Number of Interchain Transfers Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="Txns count", overlaying="y", side="right"),
+    xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+col1.plotly_chart(fig1, use_container_width=True)
+
+# Volume of Interchain Transfers Over Time
+fig2 = go.Figure()
+fig2.add_trace(go.Bar(x=agg_df["period"], y=agg_df["volume"], name="Volume", yaxis="y1", marker_color="#ff7f27"))
+fig2.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["cum_volume"],name="Total Volume", yaxis="y2", mode="lines", line=dict(color="black")))
+fig2.update_layout(title="Volume of Interchain Transfers Over Time", yaxis=dict(title="$USD"), yaxis2=dict(title="$USD", overlaying="y", side="right"), xaxis_title="",
+    legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
+col2.plotly_chart(fig2, use_container_width=True)
+
