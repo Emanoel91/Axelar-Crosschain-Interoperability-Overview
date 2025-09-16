@@ -208,7 +208,9 @@ def load_kpi_data(start_date, end_date):
         round(max(amount_usd)) as "Maximum Bridge Amount",
         round(avg(amount_usd)) as "Average Bridge Amount",
         round(median(amount_usd)) as "Median Bridge Amount",
-        count(distinct (source_chain || '➡' || destination_chain)) as "Number of Unique Routes"
+        count(distinct (source_chain || '➡' || destination_chain)) as "Number of Unique Routes",
+        count(distinct source_chain) as "Number of Source Chains",
+        count(distinct destination_chain) as "Number of Destination Chains"
     FROM axelar_service
     WHERE created_at::date >= '{start_str}' 
       AND created_at::date <= '{end_str}'
@@ -235,16 +237,22 @@ card_style = """
     </div>
 """
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(card_style.format(label="Volume", value=f"${df_kpi["Total Bridges Volume"][0]:,}"), unsafe_allow_html=True)
 with col2:
     st.markdown(card_style.format(label="#Transactions", value=f"{df_kpi["Total Number of Bridges"][0]:,} Txns"), unsafe_allow_html=True)
 with col3:
     st.markdown(card_style.format(label="#Unique Users", value=f"{df_kpi["Total Numebr of Users"][0]:,} Wallets"), unsafe_allow_html=True)
-with col4:
-    st.markdown(card_style.format(label="#Bridged Tokens", value=f"{df_kpi["Number of Supported Tokens"][0]:,}"), unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.markdown(card_style.format(label="Unique Routes", value=f"{df_kpi["Number of Unique Routes"][0]:,}"), unsafe_allow_html=True)
+with col2:
+    st.markdown(card_style.format(label="#Source Chains", value=f"{df_kpi["Number of Source Chains"][0]:,} Txns"), unsafe_allow_html=True)
+with col3:
+    st.markdown(card_style.format(label="#Destination Chains", value=f"{df_kpi["Number of Destination Chains"][0]:,} Wallets"), unsafe_allow_html=True)
+with col4:
+    st.markdown(card_style.format(label="#Bridged Tokens", value=f"{df_kpi["Number of Supported Tokens"][0]:,}"), unsafe_allow_html=True)
