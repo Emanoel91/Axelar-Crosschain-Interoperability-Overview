@@ -310,6 +310,10 @@ order by 1
 # === Load Data ==========================================================
 df_deployed_tokens = load_deployed_tokens(timeframe, start_date, end_date)
 # === Charts: Row 3 ======================================================
+color_map = {
+    "Existing Tokens": "#858dff",
+    "Newly Minted Token": "#fc9047"
+}
 col1, col2 = st.columns(2)
 
 with col1:
