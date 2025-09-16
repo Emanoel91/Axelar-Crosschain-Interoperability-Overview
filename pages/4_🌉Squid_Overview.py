@@ -251,8 +251,8 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.markdown(card_style.format(label="Unique Routes", value=f"{df_kpi["Number of Unique Routes"][0]:,}"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="#Source Chains", value=f"{df_kpi["Number of Source Chains"][0]:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="#Source Chains", value=f"{df_kpi["Number of Source Chains"][0]:,}"), unsafe_allow_html=True)
 with col3:
-    st.markdown(card_style.format(label="#Destination Chains", value=f"{df_kpi["Number of Destination Chains"][0]:,} Wallets"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="#Destination Chains", value=f"{df_kpi["Number of Destination Chains"][0]:,}"), unsafe_allow_html=True)
 with col4:
     st.markdown(card_style.format(label="#Bridged Tokens", value=f"{df_kpi["Number of Supported Tokens"][0]:,}"), unsafe_allow_html=True)
