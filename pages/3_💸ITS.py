@@ -320,7 +320,7 @@ with col1:
 
     fig1 = go.Figure()
     fig1.add_trace(go.Bar(x=agg_df["period"], y=agg_df["num_txs"], name="Number of Transfers", yaxis="y1", marker_color="#ff7f27"))
-    fig1.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["volume"], name="Volume of Transfers", yaxis="y2", mode="lines", line=dict(color="blue")))
+    fig1.add_trace(go.Scatter(x=agg_df["period"], y=agg_df["volume"], name="Volume of Transfers", yaxis="y2", mode="lines", line=dict(color="#7f8efe")))
     fig1.update_layout(title="Interchain Transfers Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="$USD", overlaying="y", side="right"),
         xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5))
     col1.plotly_chart(fig1, use_container_width=True)
