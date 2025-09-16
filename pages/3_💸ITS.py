@@ -392,7 +392,7 @@ else:
 
     
 
-    # --- chart 1: Top 10 by Volume (without Unknown) -------------------------------------------------------------------
+    # --- chart 1: Top 20 by Volume (without Unknown) -------------------------------------------------------------------
     df_grouped = (
         df[df["Symbol"] != "Unknown"]
         .groupby("Symbol", as_index=False)
@@ -402,7 +402,7 @@ else:
         })
     )
 
-    top_volume = df_grouped.sort_values("Volume of Transfers", ascending=False).head(10)
+    top_volume = df_grouped.sort_values("Volume of Transfers", ascending=False).head(20)
     fig1 = px.bar(
         top_volume,
         x="Symbol",
@@ -412,15 +412,15 @@ else:
     )
     fig1.update_traces(texttemplate='%{text:,.0f}', textposition='outside')
     fig1.update_layout(
-        title="Top 10 Tokens by Interchain Transfers Volume",
+        title="Top 20 Tokens by Interchain Transfers Volume",
         xaxis_title=" ",
         yaxis_title="$USD",
         showlegend=False
     )
 
-    # --- chart2: Top 10 by Transfers Count (without Unknown + volume > 0) ------------------------------------------------
+    # --- chart2: Top 20 by Transfers Count (without Unknown + volume > 0) ------------------------------------------------
     df_nonzero = df_grouped[df_grouped["Volume of Transfers"] > 0]
-    top_transfers = df_nonzero.sort_values("Number of Transfers", ascending=False).head(10)
+    top_transfers = df_nonzero.sort_values("Number of Transfers", ascending=False).head(20)
 
     fig2 = px.bar(
         top_transfers,
@@ -431,7 +431,7 @@ else:
     )
     fig2.update_traces(texttemplate='%{text:,.0f}', textposition='outside')
     fig2.update_layout(
-        title="Top 10 Tokens by Interchain Transfers Count",
+        title="Top 20 Tokens by Interchain Transfers Count",
         xaxis_title=" ",
         yaxis_title="Transfers count",
         showlegend=False
