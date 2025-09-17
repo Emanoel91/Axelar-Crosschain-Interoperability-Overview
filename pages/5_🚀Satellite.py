@@ -106,9 +106,12 @@ with col3:
     end_date = st.date_input("End Date", value=pd.to_datetime("2025-09-30"))
 
 # --- Row 1 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 @st.cache_data
-def get_kpi_data(_conn, start_date, end_date):
+def load_kpi_data(start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+    
     query = f"""
     WITH overview AS (
       WITH tab1 AS (
@@ -141,13 +144,13 @@ def get_kpi_data(_conn, start_date, end_date):
       COUNT(DISTINCT sender) AS "Number of Users",
       ROUND(SUM(amount_usd)) AS "Volume of Transfers"
     FROM overview
-    WHERE date >= '{start_date}' AND date <= '{end_date}';
+    WHERE date >= '{start_str}' AND date <= '{end_str}';
     """
-    df = pd.read_sql(query, _conn)
-    return df.iloc[0]
+    df = pd.read_sql(query, conn)
+    return df
 
 # --- Load KPI Data from Snowflake ---------------------------
-kpi_df = get_kpi_data(conn, start_date, end_date)
+df_kpi_data = load_kpi_data(start_date, end_date)
 
 # --- Display KPI (Row 1) --------------------------------
 card_style = """
@@ -166,11 +169,11 @@ card_style = """
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.markdown(card_style.format(label="Bridge Volume", value=f"${kpi_df["Volume of Transfers"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridge Volume", value=f"${df_kpi_data["Volume of Transfers"][0]:,}"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="Bridge Transactions", value=f"{kpi_df["Number of Transfers"][0]:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridge Transactions", value=f"{df_kpi_data["Number of Transfers"][0]:,} Txns"), unsafe_allow_html=True)
 with col3:
-    st.markdown(card_style.format(label="Unique Users", value=f"{kpi_df["Numebr of Users"][0]:,} Wallets"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Unique Users", value=f"{df_kpi_data["Numebr of Users"][0]:,} Wallets"), unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
