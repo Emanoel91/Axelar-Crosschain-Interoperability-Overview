@@ -116,20 +116,18 @@ avg_volume = df["Volume"].mean()
 avg_txns = round(df["Number of Transactions"].mean())  
 
 kpi1, kpi2, kpi3 = st.columns(3)
-kpi1.metric("Number of Contracts", f"{num_contracts}")
+kpi1.metric("Number of GMP Contracts", f"{num_contracts}")
 kpi2.metric("Avg Volume per Contract", f"{avg_volume:.1f}")
 kpi3.metric("Avg Transaction per Contract", f"{avg_txns}")
 
 # --- Contracts Table ----------------------------------------------------------------------------------
-st.subheader("📋 Contracts Overview")
+st.subheader("📑GMP Contracts Overview")
 df_table_sorted = df.sort_values(by="Number of Transactions", ascending=False).copy()
 
 df_table_sorted.index = range(1, len(df_table_sorted) + 1)
 st.dataframe(df_table_sorted, use_container_width=True)
 
 # --- Distribution Pie Charts ---------------------------------------------------------------------------
-st.subheader("📊 Distribution of Contracts")
-
 # Distribution by Number of Transactions
 bins_txns = [0,1,10,50,100,1000,10000,float('inf')]
 labels_txns = ["1 Txn", "2-10 Txns", "11-50 Txns", "51-100 Txns", "101-1000 Txns", "1001-10000 Txns", ">10000 Txns"]
@@ -148,7 +146,7 @@ with col1:
     fig_pie_txn = px.pie(
         names=txn_distribution.index,
         values=txn_distribution.values,
-        title="Distribution of Contracts by Number of Transactions"
+        title="Distribution of GMP Contracts by Number of Transactions"
     )
     st.plotly_chart(fig_pie_txn, use_container_width=True)
 
@@ -156,12 +154,12 @@ with col2:
     fig_pie_volume = px.pie(
         names=volume_distribution.index,
         values=volume_distribution.values,
-        title="Distribution of Contracts by Volume"
+        title="Distribution of GMP Contracts by Volume"
     )
     st.plotly_chart(fig_pie_volume, use_container_width=True)
 
 # --- Row 4 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# === Left function ==================================
+st.subheader("📊 Analysis of Events")
 @st.cache_data
 def load_event_txn():
 
@@ -183,7 +181,6 @@ order by 2 desc
     df = pd.read_sql(query, conn)
     return df
   
-# === right function ==============================
 @st.cache_data
 def load_event_route_data():
 
@@ -235,61 +232,54 @@ with col2:
     st.dataframe(styled_df, use_container_width=True, height=320)
 
 # --- Row 5 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# === Left function ==================================
+
 @st.cache_data
-def load_active_contracts():
+def load_event_overtime():
 
     query = f"""
-    select date_trunc('month',created_at) as "Date", 
-    count(distinct call:returnValues:destinationContractAddress) as "Number of Destination Contracts"
-    from axelar.axelscan.fact_gmp
-    group by 1
-    order by 1
+    with tab1 as (
+select created_at, event, id, data:call.transaction.from::STRING as user, CASE 
+      WHEN IS_ARRAY(data:value) OR IS_OBJECT(data:value) THEN NULL
+      WHEN TRY_TO_DOUBLE(data:value::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:value::STRING)
+      ELSE NULL
+    END AS amount_usd,
+    LOWER(data:call.chain::STRING) AS source_chain,
+    LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain
+from axelar.axelscan.fact_gmp)
 
+select date_trunc('',created_at) as "Date", event as "Event", count(distinct id) as "Txns count", round(sum(amount_usd),1) as "Txns Value (USD)"
+from tab1
+where event in ('ContractCall','ContractCallWithToken')
+group by 1, 2
+order by 1
     """
 
     df = pd.read_sql(query, conn)
     return df
   
-# === right function ==============================
-@st.cache_data
-def load_new_contracts():
-
-    query = f"""
-    with tab1 as (
-select call:returnValues:destinationContractAddress as "Destination Contract", 
-min(created_at::date) as FIRST_TX
-from axelar.axelscan.fact_gmp
-group by 1)
-
-select date_trunc('month',first_tx) as "Date", count(distinct "Destination Contract") as "New Contracts", 
-sum("New Contracts") over (order by "Date" asc) as "Total New Contracts"
-from tab1
-group by 1
-order by 1
-
-    """
-
-    df = pd.read_sql(query, conn)
-    return df
-
 # === Load Data ===================================================
-df_active_contracts = load_active_contracts()
-df_new_contracts = load_new_contracts()
-# === Tables =====================================================
+df_event_overtime = load_event_overtime()
+
 col1, col2 = st.columns(2)
 
 with col1:
-    fig1 = go.Figure()
-    fig1.add_trace(go.Bar(x=df_new_contracts["Date"], y=df_new_contracts["New Contracts"], name="New Contracts", yaxis="y1", marker_color="#ff7f27"))
-    fig1.add_trace(go.Scatter(x=df_new_contracts["Date"], y=df_new_contracts["Total New Contracts"], name="Total New Contracts", mode="lines", yaxis="y2", 
-                              line=dict(color="#0ed145", width=2, dash="solid")))
-    fig1.update_layout(title="Number of New Destination Contracts Over Time", yaxis=dict(title="contract count"), yaxis2=dict(title="contract count", 
-                            overlaying="y", side="right"), barmode="group", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
-    st.plotly_chart(fig1, use_container_width=True)
+    fig_stacked_volume = px.bar(
+        df_event_overtime,
+        x="Date",
+        y="Txns Value (USD)",
+        color="Event",
+        title="Transactions Volume Over Time By Event"
+    )
+    fig_stacked_volume.update_layout(barmode="stack", yaxis_title="$USD", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
+    st.plotly_chart(fig_stacked_volume, use_container_width=True)
 
 with col2:
-    fig_contract = px.scatter(df_active_contracts, x="Date", y="Number of Destination Contracts", size="Number of Destination Contracts", color="Number of Destination Contracts", 
-                              color_continuous_scale="Viridis", title="Number of Active Destination Contracts Over Time", 
-                              labels={"Number of Destination Contracts": "number of contracts", "Date":""})
-    st.plotly_chart(fig_contract)
+    fig_stacked_txn = px.bar(
+        df_event_overtime,
+        x="Date",
+        y="Txn Count",
+        color="Event",
+        title="Transactions Count Over Time By Event"
+    )
+    fig_stacked_txn.update_layout(barmode="stack", yaxis_title="Txns count", xaxis_title="", legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5, title=""))
+    st.plotly_chart(fig_stacked_txn, use_container_width=True)
