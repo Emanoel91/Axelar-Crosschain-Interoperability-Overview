@@ -171,7 +171,7 @@ df_event_route_data = load_event_route_data(start_date, end_date)
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Number of GMP Transactions By Events")   
+    st.markdown("<h5 style='text-align:center; font-size:16px;'>Number of GMP Transactions By Events</h5>", unsafe_allow_html=True)
     df_display = df_event_txn.copy()
     df_display.index = df_display.index + 1
     df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
@@ -179,7 +179,7 @@ with col1:
     st.dataframe(styled_df, use_container_width=True, height=320)   
 
 with col2:
-    st.subheader("Contract Calls Across Chains (Sorted by Txns Count)")   
+    st.markdown("<h5 style='text-align:center; font-size:16px;'>Contract Calls Across Chains (Sorted by Txns Count)</h5>", unsafe_allow_html=True)
     df_display = df_event_route_data.copy()
     df_display.index = df_display.index + 1
     df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
