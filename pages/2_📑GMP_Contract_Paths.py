@@ -79,25 +79,21 @@ def fetch_gmp_data():
 df = fetch_gmp_data()
 
 # --- KPI Row ------------------------------------------------------------------------------------------
-num_contracts = df.shape[0]
+num_contracts = df["Contract"].nunique()  # شمارش قراردادهای یکتا
 avg_volume = df["Volume"].mean()
 avg_txns = round(df["Number of Transactions"].mean())  # رند شده بدون اعشار
 
 kpi1, kpi2, kpi3 = st.columns(3)
-kpi1.metric("Number of Contracts", f"{num_contracts:,}")
-kpi2.metric("Avg Volume per Contract", f"${avg_volume:,.1f}")
-kpi3.metric("Avg Transaction per Contract", f"{avg_txns:,}")  # بدون اعشار
+kpi1.metric("Number of Contracts", f"{num_contracts}")
+kpi2.metric("Avg Volume per Contract", f"{avg_volume:.1f}")
+kpi3.metric("Avg Transaction per Contract", f"{avg_txns}")
 
 # --- Contracts Table ----------------------------------------------------------------------------------
 st.subheader("📋 Contracts Overview")
-# مرتب‌سازی بر اساس Number of Transactions
 df_table_sorted = df.sort_values(by="Number of Transactions", ascending=False).copy()
-
-# فرمت نمایش برای جدول
-df_table_sorted_display = df_table_sorted.copy()
-df_table_sorted_display["Volume"] = df_table_sorted_display["Volume"].map(lambda x: f"{x:,.1f}")
-df_table_sorted_display["Number of Transactions"] = df_table_sorted_display["Number of Transactions"].map(lambda x: f"{x:,}")
-st.dataframe(df_table_sorted_display, use_container_width=True)
+# اضافه کردن اندیس از 1
+df_table_sorted.index = range(1, len(df_table_sorted) + 1)
+st.dataframe(df_table_sorted, use_container_width=True)
 
 # --- Top 20 Bar Charts ---------------------------------------------------------------------------------
 st.subheader("📊 Top 20 Contracts by Transactions and Volume")
@@ -106,14 +102,14 @@ col1, col2 = st.columns(2)
 with col1:
     top_txns = df.nlargest(20, "Number of Transactions")
     fig_txns = px.bar(
-        top_txns[::-1],  # reverse for horizontal bar
+        top_txns[::-1],
         x="Number of Transactions",
         y="Contract",
         orientation='h',
         text="Number of Transactions",
         labels={"Number of Transactions": "Number of Transactions", "Contract": "Contract"}
     )
-    fig_txns.update_traces(texttemplate='%{text:,}', textposition='inside')
+    fig_txns.update_traces(textposition='inside')
     st.plotly_chart(fig_txns, use_container_width=True)
 
 with col2:
@@ -126,7 +122,7 @@ with col2:
         text="Volume",
         labels={"Volume": "Volume ($)", "Contract": "Contract"}
     )
-    fig_volume.update_traces(texttemplate='%{text:,.1f}', textposition='inside')
+    fig_volume.update_traces(textposition='inside')
     st.plotly_chart(fig_volume, use_container_width=True)
 
 # --- Distribution Pie Charts ---------------------------------------------------------------------------
