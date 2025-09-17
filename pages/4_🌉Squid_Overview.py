@@ -634,9 +634,8 @@ WITH axelar_service AS (
     LOWER(data:send:original_destination_chain) AS destination_chain,
     recipient_address AS user
   FROM axelar.axelscan.fact_transfers
-  WHERE status = 'executed' AND simplified_status = 'received'
-    AND (
-    sender_address ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
+  WHERE status = 'executed' AND simplified_status = 'received' and created_at::date>='{start_str}' and created_at::date<='{end_str}'
+    AND (sender_address ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
     or sender_address ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
     or sender_address ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
     or sender_address ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%' -- Squid coral
@@ -650,9 +649,8 @@ WITH axelar_service AS (
     LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain,
     data:call.transaction.from::STRING AS user
   FROM axelar.axelscan.fact_gmp 
-  WHERE status = 'executed' AND simplified_status = 'received'
-    AND (
-        data:approved:returnValues:contractAddress ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
+  WHERE status = 'executed' AND simplified_status = 'received' and created_at::date>='{start_str}' and created_at::date<='{end_str}'
+    AND (data:approved:returnValues:contractAddress ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
         or data:approved:returnValues:contractAddress ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
         or data:approved:returnValues:contractAddress ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
         or data:approved:returnValues:contractAddress ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%' -- Squid coral
@@ -671,7 +669,6 @@ count(distinct (source_chain || '➡' || destination_chain))<=20 then '11-20 Pat
 when count(distinct (source_chain || '➡' || destination_chain))>20 then '>20 Paths'
 end as "Class"
 FROM axelar_service
-where created_at::date>='{start_str}' and created_at::date<='{end_str}'
 group by 1)
 
 select "Class", count(distinct user) as "Number of Users"
@@ -695,7 +692,7 @@ WITH axelar_service AS (
 
   SELECT recipient_address AS user, id
   FROM axelar.axelscan.fact_transfers
-  WHERE status = 'executed' AND simplified_status = 'received'
+  WHERE status = 'executed' AND simplified_status = 'received' and created_at::date>='{start_str}' and created_at::date<='{end_str}'
     AND (
     sender_address ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
     or sender_address ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
@@ -708,7 +705,7 @@ WITH axelar_service AS (
 
   SELECT  data:call.transaction.from::STRING AS user, id
   FROM axelar.axelscan.fact_gmp 
-  WHERE status = 'executed' AND simplified_status = 'received'
+  WHERE status = 'executed' AND simplified_status = 'received' and created_at::date>='{start_str}' and created_at::date<='{end_str}'
     AND (data:approved:returnValues:contractAddress ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
         or data:approved:returnValues:contractAddress ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
         or data:approved:returnValues:contractAddress ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
@@ -724,7 +721,6 @@ when count(distinct id)>20 and count(distinct id)<=50 then 'High Activity'
 when count(distinct id)>50 then 'Very High Activity'
 end as "Class"
 FROM axelar_service
-where created_at::date>='{start_str}' and created_at::date<='{end_str}'
 group by 1)
 
 select "Class", count(distinct user) as "Number of Users"
