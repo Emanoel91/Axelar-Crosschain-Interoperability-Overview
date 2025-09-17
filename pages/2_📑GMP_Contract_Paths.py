@@ -247,7 +247,7 @@ select created_at, event, id, data:call.transaction.from::STRING as user, CASE
     LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain
 from axelar.axelscan.fact_gmp)
 
-select date_trunc('',created_at) as "Date", event as "Event", count(distinct id) as "Txns count", round(sum(amount_usd),1) as "Txns Value (USD)"
+select date_trunc('month',created_at) as "Date", event as "Event", count(distinct id) as "Txns count", round(sum(amount_usd),1) as "Txns Value (USD)"
 from tab1
 where event in ('ContractCall','ContractCallWithToken')
 group by 1, 2
