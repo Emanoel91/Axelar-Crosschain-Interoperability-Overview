@@ -1016,5 +1016,5 @@ df_display = df_path_tracking.copy()
 df_display.index = df_display.index + 1
 df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
 styled_df = df_display.style.set_properties(
-    **{"background-color": "#a1fcba"})
+    **{"background-color": "#c9fed8"})
 st.dataframe(styled_df, use_container_width=True)
