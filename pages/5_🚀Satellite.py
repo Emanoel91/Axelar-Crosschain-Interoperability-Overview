@@ -226,16 +226,28 @@ col1, col2 = st.columns(2)
 
 with col1:
     fig1 = go.Figure()
-    fig1.add_bar(x=ts_df["DATE"], y=ts_df["TRANSFERS"], name="Bridge Txns", yaxis="y1", marker_color="#ff7f27"))
+    fig1.add_bar(x=ts_df["DATE"], y=ts_df["TRANSFERS"], name="Bridge Txns", yaxis="y1", marker_color="#ff7f27")
     fig1.add_trace(go.Scatter(x=ts_df["DATE"], y=ts_df["USERS"], name="Users", mode="lines", yaxis="y2", line=dict(color="#0ed145")))
-    fig1.update_layout(title="Number of Users & Bridging Transactions Over Time", yaxis=dict(title="Txns count"), yaxis2=dict(title="Wallet count", overlaying="y", side="right"),
-        xaxis=dict(title=" "), barmode="group", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+    fig1.update_layout(
+        title="Number of Users & Bridging Transactions Over Time",
+        yaxis=dict(title="Txns count"),
+        yaxis2=dict(title="Wallet count", overlaying="y", side="right"),
+        xaxis=dict(title=" "),
+        barmode="group",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+    )
     st.plotly_chart(fig1, use_container_width=True)
 
 with col2:
     fig2 = go.Figure()
-    fig2.add_bar(x=ts_df["DATE"], y=ts_df["VOLUME_USD"], name="Bridge Volume", yaxis="y1", marker_color="#ff7f27"))
+    fig2.add_bar(x=ts_df["DATE"], y=ts_df["VOLUME_USD"], name="Bridge Volume", yaxis="y1", marker_color="#ff7f27")
     fig2.add_trace(go.Scatter(x=ts_df["DATE"], y=ts_df["AVG_VOLUME_TX"], name="Avg Volume per Txn", mode="lines", yaxis="y2", line=dict(color="#0ed145")))
-    fig2.update_layout(title="Volume of Transfers Over Time", yaxis=dict(title="$USD"), yaxis2=dict(title="$USD", overlaying="y", side="right"), xaxis=dict(title=" "), barmode="group",
-                      legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+    fig2.update_layout(
+        title="Volume of Transfers Over Time",
+        yaxis=dict(title="$USD"),
+        yaxis2=dict(title="$USD", overlaying="y", side="right"),
+        xaxis=dict(title=" "),
+        barmode="group",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
+    )
     st.plotly_chart(fig2, use_container_width=True)
