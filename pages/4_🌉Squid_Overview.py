@@ -769,3 +769,120 @@ with col1:
 
 with col2:
     st.plotly_chart(fig_donut_txn, use_container_width=True)
+
+# --- Row 6 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_top_routes(start_date, end_date):
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    WITH axelar_service AS (
+        -- Token Transfers
+        SELECT 
+            created_at, 
+            LOWER(data:send:original_source_chain) AS source_chain, 
+            LOWER(data:send:original_destination_chain) AS destination_chain,
+            recipient_address AS user, 
+            CASE 
+              WHEN IS_ARRAY(data:send:amount) THEN NULL
+              WHEN IS_OBJECT(data:send:amount) THEN NULL
+              WHEN TRY_TO_DOUBLE(data:send:amount::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:send:amount::STRING)
+              ELSE NULL
+            END AS amount,
+            CASE 
+              WHEN IS_ARRAY(data:send:amount) OR IS_ARRAY(data:link:price) THEN NULL
+              WHEN IS_OBJECT(data:send:amount) OR IS_OBJECT(data:link:price) THEN NULL
+              WHEN TRY_TO_DOUBLE(data:send:amount::STRING) IS NOT NULL AND TRY_TO_DOUBLE(data:link:price::STRING) IS NOT NULL 
+                THEN TRY_TO_DOUBLE(data:send:amount::STRING) * TRY_TO_DOUBLE(data:link:price::STRING)
+              ELSE NULL
+            END AS amount_usd,
+            CASE 
+              WHEN IS_ARRAY(data:send:fee_value) THEN NULL
+              WHEN IS_OBJECT(data:send:fee_value) THEN NULL
+              WHEN TRY_TO_DOUBLE(data:send:fee_value::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:send:fee_value::STRING)
+              ELSE NULL
+            END AS fee,
+            id, 
+            'Token Transfers' AS Service, 
+            data:link:asset::STRING AS raw_asset
+        FROM axelar.axelscan.fact_transfers
+        WHERE status = 'executed'
+          AND simplified_status = 'received'
+          AND created_at::date >= '{start_str}' 
+          AND created_at::date <= '{end_str}'
+          AND (
+            sender_address ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' 
+            OR sender_address ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%'
+            OR sender_address ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%'
+            OR sender_address ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%'
+            OR sender_address ilike '%0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8%'
+          )
+
+        UNION ALL
+
+        -- GMP
+        SELECT  
+            created_at,
+            data:call.chain::STRING AS source_chain,
+            data:call.returnValues.destinationChain::STRING AS destination_chain,
+            data:call.transaction.from::STRING AS user,
+            CASE 
+              WHEN IS_ARRAY(data:amount) OR IS_OBJECT(data:amount) THEN NULL
+              WHEN TRY_TO_DOUBLE(data:amount::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:amount::STRING)
+              ELSE NULL
+            END AS amount,
+            CASE 
+              WHEN IS_ARRAY(data:value) OR IS_OBJECT(data:value) THEN NULL
+              WHEN TRY_TO_DOUBLE(data:value::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:value::STRING)
+              ELSE NULL
+            END AS amount_usd,
+            COALESCE(
+              CASE 
+                WHEN IS_ARRAY(data:gas:gas_used_amount) OR IS_OBJECT(data:gas:gas_used_amount) 
+                  OR IS_ARRAY(data:gas_price_rate:source_token.token_price.usd) OR IS_OBJECT(data:gas_price_rate:source_token.token_price.usd) 
+                THEN NULL
+                WHEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) IS NOT NULL 
+                  AND TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING) IS NOT NULL 
+                THEN TRY_TO_DOUBLE(data:gas:gas_used_amount::STRING) * TRY_TO_DOUBLE(data:gas_price_rate:source_token.token_price.usd::STRING)
+                ELSE NULL
+              END,
+              CASE 
+                WHEN IS_ARRAY(data:fees:express_fee_usd) OR IS_OBJECT(data:fees:express_fee_usd) THEN NULL
+                WHEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING) IS NOT NULL THEN TRY_TO_DOUBLE(data:fees:express_fee_usd::STRING)
+                ELSE NULL
+              END
+            ) AS fee,
+            id, 
+            'GMP' AS Service, 
+            data:symbol::STRING AS raw_asset
+        FROM axelar.axelscan.fact_gmp 
+        WHERE status = 'executed'
+          AND simplified_status = 'received'
+          AND created_at::date >= '{start_str}' 
+          AND created_at::date <= '{end_str}'
+          AND (
+            data:approved:returnValues:contractAddress ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' 
+            OR data:approved:returnValues:contractAddress ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%'
+            OR data:approved:returnValues:contractAddress ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%'
+            OR data:approved:returnValues:contractAddress ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%'
+            OR data:approved:returnValues:contractAddress ilike '%0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8%'
+          )
+    )
+    SELECT source_chain || '➡' || destination_chain AS "Path", COUNT(DISTINCT user) AS "Number of Users"
+    FROM axelar_service
+    GROUP BY 1
+    ORDER BY 2 DESC
+    """
+
+    return pd.read_sql(query, conn)
+
+# --- Load Data --------------------------------------------------------------
+df_top_routes = load_top_routes(start_date, end_date)
+# ----------------------------------------------------------------------------
+top_user = df_top_routes.nlargest(15,"Number of Users")
+fig2 = px.bar(top_user.sort_values("Number of Users", ascending=False), x="Path", y="Number of Users", title="TOP Bridging Routes Based on the Users Count",
+              labels={"Number of Users": "Wallet count", "Path": ""}, color_discrete_sequence=["#0ed145"], text="Number of Users")
+fig2.update_traces(texttemplate='%{text}', textposition='outside')
+fig2.update_layout(xaxis={'categoryorder':'total descending'})
+st.plotly_chart(fig2, use_container_width=True)
