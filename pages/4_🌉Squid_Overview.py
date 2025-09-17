@@ -746,7 +746,7 @@ color_scale = {
 
 fig_donut_route = px.pie(df_route_distribution, names="Class", values="Number of Users", title="Distribution of Users Based on the Number of Bridging Routes", 
                           hole=0.5, color="Class", color_discrete_map=color_scale)
-fig_donut_route.update_traces(textposition='outside', textinfo='percent+label', pull=[0.05]*len(df_route_distribution))
+fig_donut_route.update_traces(textposition='inside', textinfo='percent+label', pull=[0.05]*len(df_route_distribution))
 fig_donut_route.update_layout(showlegend=True, legend=dict(orientation="v", y=0.5, x=1.1))
 
 # ---------------------------------------
@@ -759,7 +759,7 @@ color_scale = {
 
 fig_donut_txn = px.pie(df_activity_level_distribution, names="Class", values="Number of Users", title="Distribution of Users Based on Activity Level (Number of Bridging Txns)", 
                        hole=0.5, color="Class", color_discrete_map=color_scale)
-fig_donut_txn.update_traces(textposition='outside', textinfo='percent+label', pull=[0.05]*len(df_activity_level_distribution))
+fig_donut_txn.update_traces(textposition='inside', textinfo='percent+label', pull=[0.05]*len(df_activity_level_distribution))
 fig_donut_txn.update_layout(showlegend=True, legend=dict(orientation="v", y=0.5, x=1.1))
 
 col1, col2 = st.columns(2)
