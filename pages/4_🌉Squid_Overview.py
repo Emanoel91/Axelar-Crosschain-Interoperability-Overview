@@ -1010,8 +1010,11 @@ def load_path_tracking(start_date, end_date):
 df_path_tracking = load_path_tracking(start_date, end_date)
  
 # --- Display Table -------------------------------------------------------------------------------------------------
-st.subheader("🟡Squid Bridging Routes' Stats")
+st.subheader("🟡 Squid Bridging Routes' Stats")
+
 df_display = df_path_tracking.copy()
 df_display.index = df_display.index + 1
 df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
-st.dataframe(df_display, use_container_width=True)
+styled_df = df_display.style.set_properties(
+    **{"background-color": "#a1fcba"})
+st.dataframe(styled_df, use_container_width=True)
