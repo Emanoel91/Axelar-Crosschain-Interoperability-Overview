@@ -249,7 +249,7 @@ from axelar.axelscan.fact_gmp)
 
 select date_trunc('month',created_at) as "Date", event as "Event", count(distinct id) as "Txns count", round(sum(amount_usd),1) as "Txns Value (USD)"
 from tab1
-where event in ('ContractCall','ContractCallWithToken')
+where event in ('ContractCall','ContractCallWithToken') and created_at::date>='2023-01-01'
 group by 1, 2
 order by 1
     """
@@ -277,7 +277,7 @@ with col2:
     fig_stacked_txn = px.bar(
         df_event_overtime,
         x="Date",
-        y="Txn Count",
+        y="Txns Count",
         color="Event",
         title="Transactions Count Over Time By Event"
     )
