@@ -883,6 +883,6 @@ df_top_routes = load_top_routes(start_date, end_date)
 top_user = df_top_routes.nlargest(15,"Number of Users")
 fig2 = px.bar(top_user.sort_values("Number of Users", ascending=False), x="Path", y="Number of Users", title="TOP Bridging Routes Based on the Users Count",
               labels={"Number of Users": "Wallet count", "Path": ""}, color_discrete_sequence=["#0ed145"], text="Number of Users")
-fig2.update_traces(texttemplate='%{text}', textposition='outside')
+fig2.update_traces(texttemplate='%{text}', textposition='inside')
 fig2.update_layout(xaxis={'categoryorder':'total descending'})
 st.plotly_chart(fig2, use_container_width=True)
