@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import requests
 import plotly.express as px
-import plotly.graph_objects as go
 
 # --- Page Config -------------------------------------------------------------------------------------
 st.set_page_config(
@@ -82,20 +81,23 @@ df = fetch_gmp_data()
 # --- KPI Row ------------------------------------------------------------------------------------------
 num_contracts = df.shape[0]
 avg_volume = df["Volume"].mean()
-avg_txns = df["Number of Transactions"].mean()
+avg_txns = round(df["Number of Transactions"].mean())  # رند شده بدون اعشار
 
 kpi1, kpi2, kpi3 = st.columns(3)
 kpi1.metric("Number of Contracts", f"{num_contracts:,}")
 kpi2.metric("Avg Volume per Contract", f"${avg_volume:,.1f}")
-kpi3.metric("Avg Transaction per Contract", f"{avg_txns:,.1f}")
+kpi3.metric("Avg Transaction per Contract", f"{avg_txns:,}")  # بدون اعشار
 
 # --- Contracts Table ----------------------------------------------------------------------------------
 st.subheader("📋 Contracts Overview")
-df_table = df.copy()
-df_table["Volume"] = df_table["Volume"].map(lambda x: f"{x:,.1f}")
-df_table["Number of Transactions"] = df_table["Number of Transactions"].map(lambda x: f"{x:,}")
-df_table_sorted = df_table.sort_values(by="Number of Transactions", ascending=False)
-st.dataframe(df_table_sorted, use_container_width=True)
+# مرتب‌سازی بر اساس Number of Transactions
+df_table_sorted = df.sort_values(by="Number of Transactions", ascending=False).copy()
+
+# فرمت نمایش برای جدول
+df_table_sorted_display = df_table_sorted.copy()
+df_table_sorted_display["Volume"] = df_table_sorted_display["Volume"].map(lambda x: f"{x:,.1f}")
+df_table_sorted_display["Number of Transactions"] = df_table_sorted_display["Number of Transactions"].map(lambda x: f"{x:,}")
+st.dataframe(df_table_sorted_display, use_container_width=True)
 
 # --- Top 20 Bar Charts ---------------------------------------------------------------------------------
 st.subheader("📊 Top 20 Contracts by Transactions and Volume")
