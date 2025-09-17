@@ -253,3 +253,44 @@ with col2:
                               color_continuous_scale="Viridis", title="Number of Active Destination Contracts Over Time", 
                               labels={"Number of Destination Contracts": "number of contracts", "Date":""})
     st.plotly_chart(fig_contract)
+
+# --- Row 3 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_cnt_stat(start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    with tab1 as (select call:returnValues:destinationContractAddress as dest_contract
+from axelar.axelscan.fact_gmp
+where created_at::date>='{start_str}' and created_at::date<='{end_str}')
+
+select count(distinct dest_contract) as "Total Number of Destination Contracts"
+from tab1
+    """
+
+    df = pd.read_sql(query, conn)
+    return df
+
+# --- Load Data ----------------------------------------------------------------------------------------------------
+df_cnt_stat = load_cnt_stat(start_date, end_date)
+
+# --- KPI Row ------------------------------------------------------------------------------------------------------
+card_style = """
+    <div style="
+        background-color: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        ">
+        <h4 style="margin: 0; font-size: 15px; color: #555;">{label}</h4>
+        <p style="margin: 5px 0 0; font-size: 20px; font-weight: bold; color: #000;">{value}</p>
+    </div>
+"""
+
+st.markdown(card_style.format(label="Total Number of Destination Contracts", value=f"📑{df_cnt_stat["Total Number of Destination Contracts"][0]:,}"), unsafe_allow_html=True)
+
+
