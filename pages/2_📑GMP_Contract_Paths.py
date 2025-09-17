@@ -104,7 +104,7 @@ with col2:
 with col3:
     end_date = st.date_input("End Date", value=pd.to_datetime("2025-09-30"))
 
-# --- Functions -------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# --- Row 1 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # === Left function ==================================
 @st.cache_data
 def load_event_txn(start_date, end_date):
@@ -185,3 +185,71 @@ with col2:
     df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
     styled_df = df_display.style.set_properties(**{"background-color": "#c9fed8"})
     st.dataframe(styled_df, use_container_width=True, height=320)
+
+# --- Row 2 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# === Left function ==================================
+@st.cache_data
+def load_active_contracts(timeframe, start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    select date_trunc('{timeframe}',created_at) as "Date", 
+    count(distinct call:returnValues:destinationContractAddress) as "Number of Destination Contracts"
+    from axelar.axelscan.fact_gmp
+    where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+    group by 1
+    order by 1
+
+    """
+
+    df = pd.read_sql(query, conn)
+    return df
+  
+# === right function ==============================
+@st.cache_data
+def load_new_contracts(timeframe, start_date, end_date):
+    
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    with tab1 as (
+select call:returnValues:destinationContractAddress as "Destination Contract", 
+min(created_at::date) as FIRST_TX
+from axelar.axelscan.fact_gmp
+group by 1)
+
+select date_trunc('{timeframe}',first_tx) as "Date", count(distinct "Destination Contract") as "New Contracts", 
+sum("New Contracts") over (order by "Date" asc) as "Total New Contracts"
+from tab1
+where first_tx>='{start_str}' and first_tx<='{end_str}'
+group by 1
+order by 1
+
+    """
+
+    df = pd.read_sql(query, conn)
+    return df
+
+# === Load Data ===================================================
+df_active_contracts = load_active_contracts(timeframe, start_date, end_date)
+df_new_contracts = load_new_contracts(timeframe, start_date, end_date)
+# === Tables =====================================================
+col1, col2 = st.columns(2)
+
+with col1:
+    fig1 = go.Figure()
+    fig1.add_trace(go.Bar(x=df_new_contracts["Date"], y=df_new_contracts["New Contracts"], name="New Contracts", yaxis="y1", marker_color="#ff7f27"))
+    fig1.add_trace(go.Scatter(x=df_new_contracts["Date"], y=df_new_contracts["Total New Contracts"], name="Total New Contracts", mode="lines", yaxis="y2", 
+                              line=dict(color="#0ed145", width=2, dash="solid")))
+    fig1.update_layout(title="Number of New Destination Contracts Over Time", yaxis=dict(title="contract count"), yaxis2=dict(title="contract count", 
+                            overlaying="y", side="right"), barmode="group", legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
+    st.plotly_chart(fig1, use_container_width=True)
+
+with col2:
+    fig_contract = px.scatter(df_active_contracts, x="Date", y="Number of Destination Contracts", size="Number of Destination Contracts", color="Number of Destination Contracts", 
+                              color_continuous_scale="Viridis", title="Number of Active Destination Contracts Over Time", 
+                              labels={"Number of Destination Contracts": "number of contracts"})
+    st.plotly_chart(fig_contract)
