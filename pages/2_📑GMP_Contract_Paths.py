@@ -279,7 +279,7 @@ df_cnt_stat = load_cnt_stat(start_date, end_date)
 # --- KPI Row ------------------------------------------------------------------------------------------------------
 card_style = """
     <div style="
-        background-color: #f9f9f9;
+        background-color: #b8ffdb;
         border: 1px solid #e0e0e0;
         border-radius: 12px;
         padding: 20px;
