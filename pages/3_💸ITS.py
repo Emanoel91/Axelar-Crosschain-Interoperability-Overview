@@ -276,11 +276,11 @@ card_style = """
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.markdown(card_style.format(label="Number of Deployed Tokens", value=f"✨{df_deploy_stats["Total Number of Deployed Tokens"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Number of Deployed Tokens", value=f"{df_deploy_stats["Total Number of Deployed Tokens"][0]:,}"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="Number of Token Deployers", value=f"👨‍💻{df_deploy_stats["Total Number of Token Deployers"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Number of Token Deployers", value=f"{df_deploy_stats["Total Number of Token Deployers"][0]:,}"), unsafe_allow_html=True)
 with col3:
-    st.markdown(card_style.format(label="Total Gas Fees", value=f"⛽${df_deploy_stats["Total Gas Fees"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Total Gas Fees", value=f"${df_deploy_stats["Total Gas Fees"][0]:,}"), unsafe_allow_html=True)
 
 # --- Row 3 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # === Number of Tokens Deployed =====================================
