@@ -175,11 +175,11 @@ with col1:
     df_display.index = df_display.index + 1
     df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
     styled_df = df_display.style.set_properties(**{"background-color": "#c9fed8"})
-    st.dataframe(styled_df, use_container_width=True, height=400)   
+    st.dataframe(styled_df, use_container_width=True, height=320)   
 
 with col2:
     df_display = df_event_route_data.copy()
     df_display.index = df_display.index + 1
     df_display = df_display.applymap(lambda x: f"{x:,}" if isinstance(x, (int, float)) else x)
     styled_df = df_display.style.set_properties(**{"background-color": "#c9fed8"})
-    st.dataframe(styled_df, use_container_width=True, height=400)   
+    st.dataframe(styled_df, use_container_width=True, height=320)   
