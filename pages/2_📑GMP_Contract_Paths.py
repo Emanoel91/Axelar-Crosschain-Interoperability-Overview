@@ -1,16 +1,21 @@
 import streamlit as st
 import pandas as pd
 import requests
+import snowflake.connector
+import plotly.graph_objects as go
 import plotly.express as px
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+import time
 
-# --- Page Config -------------------------------------------------------------------------------------
+# --- Page Config: Tab Title & Icon -------------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Axelar: GMP Contract Dashboard",
+    page_title="Axelar: Crosschain Interoperability Overview",
     page_icon="https://axelarscan.io/logos/logo.png",
     layout="wide"
 )
 
-# --- Sidebar Footer -----------------------------------------------------------------------------------
+# --- Sidebar Footer Slightly Left-Aligned ---
 st.sidebar.markdown(
     """
     <style>
@@ -20,7 +25,7 @@ st.sidebar.markdown(
         width: 250px;
         font-size: 13px;
         color: gray;
-        margin-left: 5px;
+        margin-left: 5px; # -- MOVE LEFT
         text-align: left;  
     }
     .sidebar-footer img {
@@ -53,10 +58,8 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True
 )
-
 # --- Title --------------------------------------------------------------------------------------------
-st.title("📑 GMP Contract Dashboard")
-st.info("📊 Charts initially display data for all contracts. Data is fetched from Axelar API.")
+st.title("📑 GMP Contracts")
 
 # --- Fetch Data --------------------------------------------------------------------------------------
 @st.cache_data(ttl=300)
