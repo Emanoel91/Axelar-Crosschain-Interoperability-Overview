@@ -169,8 +169,8 @@ card_style = """
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.markdown(card_style.format(label="Bridge Volume", value=f"💸${df_kpi_data["Volume of Transfers"][0]:,}"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridge Volume", value=f"${df_kpi_data["Volume of Transfers"][0]:,}"), unsafe_allow_html=True)
 with col2:
-    st.markdown(card_style.format(label="Bridge Transactions", value=f"🚀{df_kpi_data["Number of Transfers"][0]:,} Txns"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Bridge Transactions", value=f"{df_kpi_data["Number of Transfers"][0]:,} Txns"), unsafe_allow_html=True)
 with col3:
-    st.markdown(card_style.format(label="Unique Users", value=f"👥{df_kpi_data["Number of Users"][0]:,} Wallets"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Unique Users", value=f"{df_kpi_data["Number of Users"][0]:,} Wallets"), unsafe_allow_html=True)
