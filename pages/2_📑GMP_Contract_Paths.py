@@ -180,7 +180,7 @@ order by 2 desc
 
     """
 
-    df = pd.read_sql(query)
+    df = pd.read_sql(query, conn)
     return df
   
 # === right function ==============================
@@ -209,7 +209,7 @@ order by 2 desc
 
     """
 
-    df = pd.read_sql(query)
+    df = pd.read_sql(query, conn)
     return df
 
 # === Load Data ===================================================
@@ -248,7 +248,7 @@ def load_active_contracts():
 
     """
 
-    df = pd.read_sql(query)
+    df = pd.read_sql(query, conn)
     return df
   
 # === right function ==============================
@@ -270,7 +270,7 @@ order by 1
 
     """
 
-    df = pd.read_sql(query)
+    df = pd.read_sql(query, conn)
     return df
 
 # === Load Data ===================================================
