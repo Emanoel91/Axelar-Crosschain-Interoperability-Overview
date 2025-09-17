@@ -251,5 +251,5 @@ with col1:
 with col2:
     fig_contract = px.scatter(df_active_contracts, x="Date", y="Number of Destination Contracts", size="Number of Destination Contracts", color="Number of Destination Contracts", 
                               color_continuous_scale="Viridis", title="Number of Active Destination Contracts Over Time", 
-                              labels={"Number of Destination Contracts": "number of contracts"})
+                              labels={"Number of Destination Contracts": "number of contracts", "Date":""})
     st.plotly_chart(fig_contract)
