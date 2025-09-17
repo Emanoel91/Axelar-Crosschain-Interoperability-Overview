@@ -82,9 +82,9 @@ def fetch_gmp_data():
 df = fetch_gmp_data()
 
 # --- KPI Row ------------------------------------------------------------------------------------------
-num_contracts = df["Contract"].nunique()  # شمارش قراردادهای یکتا
+num_contracts = df["Contract"].nunique()  
 avg_volume = df["Volume"].mean()
-avg_txns = round(df["Number of Transactions"].mean())  # رند شده بدون اعشار
+avg_txns = round(df["Number of Transactions"].mean())  
 
 kpi1, kpi2, kpi3 = st.columns(3)
 kpi1.metric("Number of Contracts", f"{num_contracts}")
@@ -94,43 +94,9 @@ kpi3.metric("Avg Transaction per Contract", f"{avg_txns}")
 # --- Contracts Table ----------------------------------------------------------------------------------
 st.subheader("📋 Contracts Overview")
 df_table_sorted = df.sort_values(by="Number of Transactions", ascending=False).copy()
-# اضافه کردن اندیس از 1
+
 df_table_sorted.index = range(1, len(df_table_sorted) + 1)
 st.dataframe(df_table_sorted, use_container_width=True)
-
-# --- Top 20 Bar Charts ---------------------------------------------------------------------------------
-st.subheader("📊 Top 20 Contracts by Transactions and Volume")
-col1, col2 = st.columns(2)
-
-# گروه‌بندی بر اساس Contract
-df_grouped = df.groupby("Contract").agg({
-    "Number of Transactions": "sum",
-    "Volume": "sum"
-}).reset_index()
-
-with col1:
-    top_txns = df_grouped.nlargest(20, "Number of Transactions")
-    fig_txns = px.bar(
-        top_txns[::-1],
-        x="Number of Transactions",
-        y="Contract",
-        orientation='h',
-        text="Number of Transactions"
-    )
-    fig_txns.update_traces(textposition='inside')
-    st.plotly_chart(fig_txns, use_container_width=True)
-
-with col2:
-    top_volume = df_grouped.nlargest(20, "Volume")
-    fig_volume = px.bar(
-        top_volume[::-1],
-        x="Volume",
-        y="Contract",
-        orientation='h',
-        text="Volume"
-    )
-    fig_volume.update_traces(textposition='inside')
-    st.plotly_chart(fig_volume, use_container_width=True)
 
 # --- Distribution Pie Charts ---------------------------------------------------------------------------
 st.subheader("📊 Distribution of Contracts")
