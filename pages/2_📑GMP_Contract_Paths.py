@@ -99,28 +99,32 @@ st.dataframe(df_table_sorted, use_container_width=True)
 st.subheader("📊 Top 20 Contracts by Transactions and Volume")
 col1, col2 = st.columns(2)
 
+# گروه‌بندی بر اساس Contract
+df_grouped = df.groupby("Contract").agg({
+    "Number of Transactions": "sum",
+    "Volume": "sum"
+}).reset_index()
+
 with col1:
-    top_txns = df.nlargest(20, "Number of Transactions")
+    top_txns = df_grouped.nlargest(20, "Number of Transactions")
     fig_txns = px.bar(
         top_txns[::-1],
         x="Number of Transactions",
         y="Contract",
         orientation='h',
-        text="Number of Transactions",
-        labels={"Number of Transactions": "Number of Transactions", "Contract": "Contract"}
+        text="Number of Transactions"
     )
     fig_txns.update_traces(textposition='inside')
     st.plotly_chart(fig_txns, use_container_width=True)
 
 with col2:
-    top_volume = df.nlargest(20, "Volume")
+    top_volume = df_grouped.nlargest(20, "Volume")
     fig_volume = px.bar(
         top_volume[::-1],
         x="Volume",
         y="Contract",
         orientation='h',
-        text="Volume",
-        labels={"Volume": "Volume ($)", "Contract": "Contract"}
+        text="Volume"
     )
     fig_volume.update_traces(textposition='inside')
     st.plotly_chart(fig_volume, use_container_width=True)
