@@ -153,7 +153,7 @@ where created_at::date>='{start_str}' and created_at::date<='{end_str}')
 select source_chain || '➡' || destination_chain as "Route", 
 count(distinct id) as "🔗Txns count", 
 count(distinct user) as "👥Users Count", 
-round(sum(amount_usd)) as "💸Txns Value (USD)"
+round(sum(amount_usd),1) as "💸Txns Value (USD)"
 from tab1
 where event in ('ContractCall','ContractCallWithToken')
 group by 1
