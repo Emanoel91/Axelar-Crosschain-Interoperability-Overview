@@ -618,4 +618,158 @@ with col2:
                         title="Share of Bridge Volume by User Type", barmode="stack", color_discrete_map={"New Users": "#0ed145", "Returning Users": "#ff7f27"})
     fig_normalized.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5), legend_title_text="")
     col2.plotly_chart(fig_normalized)
-    
+
+# --- Row 5 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+@st.cache_data
+def load_route_distribution(start_date, end_date):
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    with overview as (
+WITH axelar_service AS (
+  
+  SELECT 
+    LOWER(data:send:original_source_chain) AS source_chain, 
+    LOWER(data:send:original_destination_chain) AS destination_chain,
+    recipient_address AS user
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+    AND (
+    sender_address ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
+    or sender_address ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
+    or sender_address ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
+    or sender_address ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%' -- Squid coral
+    or sender_address ilike '%0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8%' -- Squid coral hub
+) 
+
+  UNION ALL
+
+  SELECT 
+    LOWER(data:call.chain::STRING) AS source_chain,
+    LOWER(data:call.returnValues.destinationChain::STRING) AS destination_chain,
+    data:call.transaction.from::STRING AS user
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received'
+    AND (
+        data:approved:returnValues:contractAddress ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
+        or data:approved:returnValues:contractAddress ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
+        or data:approved:returnValues:contractAddress ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
+        or data:approved:returnValues:contractAddress ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%' -- Squid coral
+        or data:approved:returnValues:contractAddress ilike '%0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8%' -- Squid coral hub
+        ) 
+)
+
+SELECT user, count(distinct (source_chain || '➡' || destination_chain)), case 
+when count(distinct (source_chain || '➡' || destination_chain))=1 then '1 Path'
+when count(distinct (source_chain || '➡' || destination_chain))>1 and 
+count(distinct (source_chain || '➡' || destination_chain))<=5 then '2-5 Paths'
+when count(distinct (source_chain || '➡' || destination_chain))>5 and 
+count(distinct (source_chain || '➡' || destination_chain))<=10 then '6-10 Paths'
+when count(distinct (source_chain || '➡' || destination_chain))>10 and 
+count(distinct (source_chain || '➡' || destination_chain))<=20 then '11-20 Paths'
+when count(distinct (source_chain || '➡' || destination_chain))>20 then '>20 Paths'
+end as "Class"
+FROM axelar_service
+where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+group by 1)
+
+select "Class", count(distinct user) as "Number of Users"
+from overview
+group by 1 
+order by 2 desc 
+
+    """
+
+    return pd.read_sql(query, conn)
+
+# --------------------------------------
+@st.cache_data
+def load_activity_level_distribution(start_date, end_date):
+    start_str = start_date.strftime("%Y-%m-%d")
+    end_str = end_date.strftime("%Y-%m-%d")
+
+    query = f"""
+    with overview as (
+WITH axelar_service AS (
+
+  SELECT recipient_address AS user, id
+  FROM axelar.axelscan.fact_transfers
+  WHERE status = 'executed' AND simplified_status = 'received'
+    AND (
+    sender_address ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
+    or sender_address ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
+    or sender_address ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
+    or sender_address ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%' -- Squid coral
+    or sender_address ilike '%0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8%' -- Squid coral hub
+) 
+
+  UNION ALL
+
+  SELECT  data:call.transaction.from::STRING AS user, id
+  FROM axelar.axelscan.fact_gmp 
+  WHERE status = 'executed' AND simplified_status = 'received'
+    AND (data:approved:returnValues:contractAddress ilike '%0xce16F69375520ab01377ce7B88f5BA8C48F8D666%' -- Squid
+        or data:approved:returnValues:contractAddress ilike '%0x492751eC3c57141deb205eC2da8bFcb410738630%' -- Squid-blast
+        or data:approved:returnValues:contractAddress ilike '%0xDC3D8e1Abe590BCa428a8a2FC4CfDbD1AcF57Bd9%' -- Squid-fraxtal
+        or data:approved:returnValues:contractAddress ilike '%0xdf4fFDa22270c12d0b5b3788F1669D709476111E%' -- Squid coral
+        or data:approved:returnValues:contractAddress ilike '%0xe6B3949F9bBF168f4E3EFc82bc8FD849868CC6d8%' -- Squid coral hub
+        ) 
+)
+
+SELECT user, count(distinct id), case 
+when count(distinct id)<=5 then 'Low Activity'
+when count(distinct id)>5 and count(distinct id)<=20 then 'Moderate Activity'
+when count(distinct id)>20 and count(distinct id)<=50 then 'High Activity'
+when count(distinct id)>50 then 'Very High Activity'
+end as "Class"
+FROM axelar_service
+where created_at::date>='{start_str}' and created_at::date<='{end_str}'
+group by 1)
+
+select "Class", count(distinct user) as "Number of Users"
+from overview
+group by 1
+order by 2 desc 
+
+    """
+
+    return pd.read_sql(query, conn)
+
+# --- Load Data --------------------------------------------------------------------------------------
+df_route_distribution = load_route_distribution(start_date, end_date)
+df_activity_level_distribution = load_activity_level_distribution(start_date, end_date)
+# ----------------------------------------------------------------------------------------------------
+color_scale = {
+    '1 Path': '#84f4a4',       
+    '2-5 Paths': '#3ec564',
+    '6-10 Paths': '#cbbd55',
+    '11-20 Paths': '#e3a567',
+    '>20 Paths': '#f8993a'
+}
+
+fig_donut_route = px.pie(df_route_distribution, names="Class", values="Number of Users", title="Distribution of Users Based on the Number of Bridging Routes", 
+                          hole=0.5, color="Class", color_discrete_map=color_scale)
+fig_donut_route.update_traces(textposition='outside', textinfo='percent+label', pull=[0.05]*len(df_route_distribution))
+fig_donut_route.update_layout(showlegend=True, legend=dict(orientation="v", y=0.5, x=1.1))
+
+# ---------------------------------------
+color_scale = {
+    'Low Activity': '#84f4a4',       
+    'Moderate Activity': '#3ec564',
+    'High Activity': '#e3a567',
+    'Very High Activity': '#f8993a'
+}
+
+fig_donut_txn = px.pie(df_activity_level_distribution, names="Class", values="Number of Users", title="Distribution of Users Based on Activity Level (Number of Bridging Txns)", 
+                       hole=0.5, color="Class", color_discrete_map=color_scale)
+fig_donut_txn.update_traces(textposition='outside', textinfo='percent+label', pull=[0.05]*len(df_activity_level_distribution))
+fig_donut_txn.update_layout(showlegend=True, legend=dict(orientation="v", y=0.5, x=1.1))
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.plotly_chart(fig_donut_route, use_container_width=True)
+
+with col2:
+    st.plotly_chart(fig_donut_txn, use_container_width=True)
