@@ -155,8 +155,8 @@ df_kpi_data = load_kpi_data(start_date, end_date)
 # --- Display KPI (Row 1) --------------------------------
 card_style = """
     <div style="
-        background-color: #f9f9f9;
-        border: 1px solid #e0e0e0;
+        background-color: #cafdd8;
+        border: 1px solid #000000;
         border-radius: 12px;
         padding: 20px;
         text-align: center;
