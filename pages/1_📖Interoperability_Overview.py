@@ -265,7 +265,7 @@ with col5:
 with col6:
     st.markdown(card_style.format(label="Unique Paths", value=f"{df_crosschain_stats['Unique Paths'][0]:,}"), unsafe_allow_html=True)
 with col7:
-    st.markdown(card_style.format(label="Avg Gas Fee", value=f"${df_crosschain_stats['Avg Gas Fee'][0]:,} Wallets"), unsafe_allow_html=True)
+    st.markdown(card_style.format(label="Avg Gas Fee", value=f"${df_crosschain_stats['Avg Gas Fee'][0]:,}"), unsafe_allow_html=True)
 with col8:
     st.markdown(card_style.format(label="Median Gas Fee", value=f"${df_crosschain_stats['Median Gas Fee'][0]:,}"), unsafe_allow_html=True)
     
